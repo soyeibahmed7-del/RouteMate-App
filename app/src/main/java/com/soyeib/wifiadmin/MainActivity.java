@@ -4,12 +4,18 @@ import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.hardware.biometrics.BiometricManager;
+import android.hardware.biometrics.BiometricPrompt;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.CancellationSignal;
 import android.util.Base64;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
@@ -25,6 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -206,6 +213,89 @@ public class MainActivity extends Activity {
             } catch (Exception e) {
                 return false;
             }
+        }
+
+        /** True when this phone (Android 9 or newer) has a fingerprint sensor with at least one fingerprint saved in the phone's own settings. */
+        @JavascriptInterface
+        public boolean biometricAvailable() {
+            try {
+                if (Build.VERSION.SDK_INT < 28) return false;
+                if (Build.VERSION.SDK_INT < 29) return getPackageManager().hasSystemFeature(PackageManager.FEATURE_FINGERPRINT);
+                BiometricManager bm = getSystemService(BiometricManager.class);
+                if (bm == null) return false;
+                int r = Build.VERSION.SDK_INT >= 30
+                        ? bm.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+                        : bm.canAuthenticate();
+                return r == BiometricManager.BIOMETRIC_SUCCESS;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
+        /**
+         * Shows the phone's own fingerprint dialog. The fingerprints are the ones saved in the phone's settings; the app never sees or stores them.
+         * The result goes to BioDone(id, code, messageB64) in the page. code: ok | cancel | none (no fingerprint saved) | lockout | fail.
+         */
+        @JavascriptInterface
+        public void biometricAuth(final String id, final String title, final String subtitle, final String cancelText) {
+            if (id == null || !id.matches("[A-Za-z0-9]{1,16}")) return;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (Build.VERSION.SDK_INT < 28) {
+                            bioResult(id, "none", "");
+                            return;
+                        }
+                        Executor ex = getMainExecutor();
+                        BiometricPrompt.Builder b = new BiometricPrompt.Builder(MainActivity.this)
+                                .setTitle(title == null || title.isEmpty() ? "Sign in" : title)
+                                .setSubtitle(subtitle == null ? "" : subtitle);
+                        if (Build.VERSION.SDK_INT >= 30) b.setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG);
+                        b.setNegativeButton(cancelText == null || cancelText.isEmpty() ? "Cancel" : cancelText, ex, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                bioResult(id, "cancel", "");
+                            }
+                        });
+                        b.build().authenticate(new CancellationSignal(), ex, new BiometricPrompt.AuthenticationCallback() {
+                            @Override
+                            public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
+                                bioResult(id, "ok", "");
+                            }
+
+                            @Override
+                            public void onAuthenticationError(int errorCode, CharSequence errString) {
+                                String code;
+                                switch (errorCode) {
+                                    case BiometricPrompt.BIOMETRIC_ERROR_USER_CANCELED:
+                                    case BiometricPrompt.BIOMETRIC_ERROR_CANCELED:
+                                        code = "cancel";
+                                        break;
+                                    case BiometricPrompt.BIOMETRIC_ERROR_NO_BIOMETRICS:
+                                    case BiometricPrompt.BIOMETRIC_ERROR_HW_NOT_PRESENT:
+                                    case BiometricPrompt.BIOMETRIC_ERROR_HW_UNAVAILABLE:
+                                        code = "none";
+                                        break;
+                                    case BiometricPrompt.BIOMETRIC_ERROR_LOCKOUT:
+                                    case BiometricPrompt.BIOMETRIC_ERROR_LOCKOUT_PERMANENT:
+                                        code = "lockout";
+                                        break;
+                                    default:
+                                        code = "fail";
+                                }
+                                bioResult(id, code, errString == null ? "" : errString.toString());
+                            }
+                        });
+                    } catch (Exception e) {
+                        bioResult(id, "fail", String.valueOf(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
+                    }
+                }
+            });
+        }
+
+        private void bioResult(String id, String code, String message) {
+            callJs("BioDone('" + id + "','" + code + "','" + b64(message) + "')");
         }
 
         @JavascriptInterface

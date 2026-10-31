@@ -357,6 +357,7 @@ h1 { font-size: 26px; }
       <div class="field"><label for="l-pass" data-i18n="l_pass"></label><input id="l-pass" type="password" autocomplete="current-password"></div>
       <div class="login-err" id="login-err" role="alert"></div>
       <button class="btn primary" type="submit" data-i18n="login_btn"></button>
+      <button class="btn" type="button" id="bio-login" hidden data-i18n="bio_btn"></button>
     </form>
     <div class="secure"><span data-i18n="secure"></span></div>
   </div>
@@ -457,6 +458,14 @@ h1 { font-size: 26px; }
           <button class="chip" type="button" data-lang-set="bn" aria-pressed="false">বাংলা</button>
         </div>
       </div>
+      <div class="panel" id="bio-panel" hidden>
+        <h2 data-i18n="bio_set"></h2>
+        <p class="hint" data-i18n="bio_set_p"></p>
+        <div class="chips" id="bio-set">
+          <button class="chip" type="button" data-bio-set="1" aria-pressed="false" data-i18n="bio_on"></button>
+          <button class="chip" type="button" data-bio-set="0" aria-pressed="true" data-i18n="bio_off"></button>
+        </div>
+      </div>
       <div class="panel">
         <h2 data-i18n="set_routers"></h2>
         <div id="router-list"></div>
@@ -512,6 +521,10 @@ h1 { font-size: 26px; }
 (function () {
   var T = {
     en: {
+      bio_btn: "Sign in with fingerprint", bio_title: "Sign in", bio_sub: "Touch the fingerprint sensor", bio_cancel: "Use password", bio_set: "Fingerprint sign-in",
+      bio_set_p: "Use a fingerprint saved on this phone to sign in. Your app password still works. Fingerprints are managed in the phone's own Settings; this app never stores them.",
+      bio_on: "On", bio_off: "Off", bio_enabled: "Fingerprint sign-in is on", bio_disabled: "Fingerprint sign-in is off", bio_none: "No fingerprint is saved on this phone. Add one in the phone's Settings first.",
+      bio_lock: "Too many tries. Use your password, or try again later.", bio_fail: "Fingerprint did not work. Use your password.", bio_hint: "Tip: turn on fingerprint sign-in in Settings.",
       brand: "RouteMate", nav_ai: "AI", title_ai: "AI Assistant", at_chat: "Assistant", at_health: "Health", at_dev: "Devices", at_sec: "Security", ai_ph: "Ask or tell me what to do…", ai_send: "Send", ai_clear: "Clear chat", ai_think: "Thinking…", ai_hello: "Hi! I can show devices, explain slow WiFi, block/unblock, blacklist, limit or rename a device, and mark devices as known. Try one below.", ai_setup_t: "AI is not set up yet", ai_setup_p: "The chat needs your own AI backend (it keeps the Gemini key safe, outside the app). Health, Devices and Security tabs work without it. Add the backend link in Settings.", ai_goset: "Open Settings", q1: "Which device uses the most bandwidth?", q2: "Why is my WiFi slow?", q3: "Show blacklisted devices", q4: "Is anything unusual on my network?",
 aiset_t: "AI backend", aiset_p: "Link and token from your Cloudflare Worker. They are saved only on this phone. See ai-backend/README.md.", aiset_url: "Backend link", aiset_tok: "App token", aiset_off: "Remove", ai_saved: "Saved.", ai_removed: "Removed.",
 ae_auth: "The backend rejected the token. Check the app token in Settings.", ae_busy: "The AI is busy or the free limit is used up. Try again in a minute.", ae_backend: "The AI backend returned an error ({s}).", ae_net: "Could not reach the AI backend. Check the link and your internet.", ae_empty: "The AI gave no answer. Try again.", ae_many: "That took too many steps. Please ask in a simpler way.",
@@ -540,6 +553,10 @@ sa_title: "Security Advisor", sa_ok: "No security problem is visible in the data
       x_blocked: "{n} blocked", x_unblocked: "{n} can use the internet again", x_limit: "{n}: {l}", updated: "Updated", confirm_block: "Tap again to block", err_prefix: "Router problem: "
     },
     bn: {
+      bio_btn: "ফিঙ্গারপ্রিন্ট দিয়ে লগইন", bio_title: "লগইন", bio_sub: "ফিঙ্গারপ্রিন্ট সেন্সরে আঙুল রাখুন", bio_cancel: "পাসওয়ার্ড দিন", bio_set: "ফিঙ্গারপ্রিন্ট লগইন",
+      bio_set_p: "এই ফোনে সংরক্ষিত ফিঙ্গারপ্রিন্ট দিয়ে লগইন করুন। অ্যাপের পাসওয়ার্ডও আগের মতো কাজ করবে। ফিঙ্গারপ্রিন্ট ফোনের নিজস্ব সেটিংসে থাকে; এই অ্যাপ সেটি সংরক্ষণ করে না।",
+      bio_on: "চালু", bio_off: "বন্ধ", bio_enabled: "ফিঙ্গারপ্রিন্ট লগইন চালু হয়েছে", bio_disabled: "ফিঙ্গারপ্রিন্ট লগইন বন্ধ হয়েছে", bio_none: "এই ফোনে কোনো ফিঙ্গারপ্রিন্ট সংরক্ষিত নেই। আগে ফোনের সেটিংসে যোগ করুন।",
+      bio_lock: "অনেকবার চেষ্টা হয়েছে। পাসওয়ার্ড দিন, অথবা পরে আবার চেষ্টা করুন।", bio_fail: "ফিঙ্গারপ্রিন্ট কাজ করেনি। পাসওয়ার্ড দিন।", bio_hint: "টিপ: সেটিংসে গিয়ে ফিঙ্গারপ্রিন্ট লগইন চালু করুন।",
       brand: "RouteMate", nav_ai: "এআই", title_ai: "এআই সহকারী", at_chat: "সহকারী", at_health: "স্বাস্থ্য", at_dev: "ডিভাইস", at_sec: "নিরাপত্তা", ai_ph: "প্রশ্ন করুন বা কাজ বলুন…", ai_send: "পাঠান", ai_clear: "চ্যাট মুছুন", ai_think: "ভাবছি…", ai_hello: "হাই! আমি ডিভাইস দেখাতে, ধীর ওয়াইফাইয়ের কারণ বলতে, ডিভাইস ব্লক/আনব্লক, ব্ল্যাকলিস্ট, গতি সীমা, নাম বদল আর পরিচিত চিহ্ন দিতে পারি। নিচের একটা চেষ্টা করুন।", ai_setup_t: "এআই এখনও সেট করা হয়নি", ai_setup_p: "চ্যাটের জন্য আপনার নিজের এআই ব্যাকএন্ড লাগবে (এটা Gemini কী অ্যাপের বাইরে নিরাপদ রাখে)। স্বাস্থ্য, ডিভাইস ও নিরাপত্তা ট্যাব এটা ছাড়াই চলে। সেটিংসে ব্যাকএন্ডের লিংক দিন।", ai_goset: "সেটিংস খুলুন", q1: "কোন ডিভাইস সবচেয়ে বেশি ডেটা নিচ্ছে?", q2: "আমার ওয়াইফাই ধীর কেন?", q3: "ব্ল্যাকলিস্ট করা ডিভাইস দেখাও", q4: "আমার নেটওয়ার্কে অস্বাভাবিক কিছু আছে?",
 aiset_t: "এআই ব্যাকএন্ড", aiset_p: "আপনার Cloudflare Worker-এর লিংক ও টোকেন। এগুলো শুধু এই ফোনে থাকে। ai-backend/README.md দেখুন।", aiset_url: "ব্যাকএন্ড লিংক", aiset_tok: "অ্যাপ টোকেন", aiset_off: "সরান", ai_saved: "সেভ হয়েছে।", ai_removed: "সরানো হয়েছে।",
 ae_auth: "ব্যাকএন্ড টোকেন গ্রহণ করেনি। সেটিংসে টোকেন মিলিয়ে দেখুন।", ae_busy: "এআই ব্যস্ত বা ফ্রি সীমা শেষ। এক মিনিট পরে আবার চেষ্টা করুন।", ae_backend: "এআই ব্যাকএন্ডে সমস্যা ({s})।", ae_net: "এআই ব্যাকএন্ডে পৌঁছানো যায়নি। লিংক ও ইন্টারনেট দেখুন।", ae_empty: "এআই কোনো উত্তর দেয়নি। আবার চেষ্টা করুন।", ae_many: "অনেক ধাপ লেগে গেছে। সহজ করে আবার বলুন।",
@@ -840,10 +857,10 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   }
   function start() {
     acl.loaded = false; acl.busy = false; acl.rid = ""; sel = "all"; R = {}; buildClients();
-    $("#setup").hidden = true; $("#login").hidden = true; $("#app").hidden = false; readHash();
+    $("#setup").hidden = true; $("#login").hidden = true; $("#app").hidden = false; readHash(); renderBio(); bioHint();
     poll(); clearInterval(timer); timer = setInterval(poll, 6000);
   }
-  function signedOut() { clearInterval(timer); user = null; unlocked = false; R = {}; $("#app").hidden = true; $("#setup").hidden = !!loadCfg(); $("#login").hidden = !loadCfg(); }
+  function signedOut() { clearInterval(timer); user = null; unlocked = false; R = {}; $("#app").hidden = true; $("#setup").hidden = !!loadCfg(); $("#login").hidden = !loadCfg(); renderBio(); }
 
   // ---- access list (blacklist / whitelist), one router at a time ----
   function aclDevices() {
@@ -925,6 +942,58 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
     api("/api/login", { password: $("#l-pass").value }).then(function (u) { user = u; $("#l-pass").value = ""; start(); })
       .catch(function (er) { $("#login-err").textContent = er.status === 401 ? t("login_bad") : er.message; });
   });
+  // ---- fingerprint sign-in: the phone's own fingerprint dialog (Android BiometricPrompt, through the bridge).
+  // It only replaces typing the app password. The password always still works, and the first sign-in is always with the password.
+  // The fingerprints stay in the phone's own settings; the app only learns "matched" or "not matched". ----
+  var bioCalls = {}, bioBusy = false;
+  window.BioDone = function (id, code, msg) {
+    var p = bioCalls[id]; if (!p) return; delete bioCalls[id];
+    if (code === "ok") p.ok(); else { var e = new Error(b64d(msg)); e.code = code; p.no(e); }
+  };
+  function bioAvailable() { try { return typeof Native.biometricAvailable === "function" && Native.biometricAvailable() === true; } catch (e) { return false; } }
+  function bioEnabled() { try { return localStorage.getItem("wifi-bio") === "1"; } catch (e) { return false; } }
+  function bioAsk() {
+    return new Promise(function (ok, no) {
+      var id = "b" + (++seq); bioCalls[id] = { ok: ok, no: no };
+      try { Native.biometricAuth(id, t("bio_title"), t("bio_sub"), t("bio_cancel")); } catch (e) { delete bioCalls[id]; no(e); }
+    });
+  }
+  function bioWhy(e) { return e.code === "none" ? t("bio_none") : e.code === "lockout" ? t("bio_lock") : t("bio_fail"); }
+  function renderBio() {
+    var av = bioAvailable(), on = av && bioEnabled();
+    $("#bio-panel").hidden = !av;
+    $("#bio-login").hidden = !(on && loadCfg());
+    document.querySelectorAll("[data-bio-set]").forEach(function (c) { c.setAttribute("aria-pressed", (c.dataset.bioSet === "1") === on ? "true" : "false"); });
+  }
+  function bioLogin() {
+    if (bioBusy || !cfg || unlocked || !bioAvailable() || !bioEnabled()) return;
+    bioBusy = true; $("#login-err").textContent = "";
+    bioAsk().then(function () { unlocked = true; user = USER; $("#l-pass").value = ""; start(); })
+      .catch(function (e) { if (e.code !== "cancel") $("#login-err").textContent = bioWhy(e); })
+      .then(function () { bioBusy = false; });
+  }
+  function bioHint() { // one time, after a password sign-in, when this phone could use a fingerprint but it is not turned on yet
+    if (!bioAvailable() || bioEnabled()) return;
+    try { if (localStorage.getItem("wifi-bio-hint")) return; localStorage.setItem("wifi-bio-hint", "1"); } catch (e) { return; }
+    setTimeout(function () { toast(t("bio_hint")); }, 1500);
+  }
+  $("#bio-login").addEventListener("click", bioLogin);
+  document.querySelectorAll("[data-bio-set]").forEach(function (c) {
+    c.addEventListener("click", function () {
+      if (c.dataset.bioSet === "1") { // turning it on needs one good fingerprint, so we know it works on this phone
+        if (bioEnabled() || bioBusy) return;
+        bioBusy = true;
+        bioAsk().then(function () { try { localStorage.setItem("wifi-bio", "1"); } catch (e) {} toast(t("bio_enabled")); })
+          .catch(function (e) { if (e.code !== "cancel") toast(bioWhy(e)); })
+          .then(function () { bioBusy = false; renderBio(); });
+      } else {
+        if (!bioEnabled()) return;
+        try { localStorage.removeItem("wifi-bio"); } catch (e) {}
+        renderBio(); toast(t("bio_disabled"));
+      }
+    });
+  });
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) renderBio(); }); // the person may have just added a fingerprint in the phone's Settings
   function setLang(l) { lang = l; try { localStorage.setItem("wifi-lang", lang); } catch (e) {} applyStatic(); renderAcl(); renderAll(); markLang(); }
   function markLang() { document.querySelectorAll("[data-lang-set]").forEach(function (c) { c.setAttribute("aria-pressed", c.dataset.langSet === lang ? "true" : "false"); }); }
   document.querySelectorAll("[data-lang-set]").forEach(function (c) { c.addEventListener("click", function () { setLang(c.dataset.langSet); }); });
@@ -1115,7 +1184,10 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   $("#logout").addEventListener("click", function () { api("/api/logout", {}).catch(function () {}).then(signedOut); });
 
   applyStatic();
-  function showFirstScreen() { cfg = loadCfg(); $("#setup").hidden = !!cfg; $("#login").hidden = !cfg; $("#app").hidden = true; }
+  function showFirstScreen() {
+    cfg = loadCfg(); $("#setup").hidden = !!cfg; $("#login").hidden = !cfg; $("#app").hidden = true; renderBio();
+    if (cfg) setTimeout(bioLogin, 350); // opening the app offers the fingerprint dialog straight away; Cancel leaves the password box
+  }
   var DEF_URL = { ac5: "http://192.168.1.1", f3: "http://192.168.0.1", netis: "http://192.168.1.1" };
   $("#s-type").addEventListener("change", function () { var u = $("#s-url"); if (Object.keys(DEF_URL).some(function (k) { return DEF_URL[k] === u.value.trim(); })) u.value = DEF_URL[this.value]; });
   $("#setup-form").addEventListener("submit", function (e) {
@@ -1139,7 +1211,7 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   $("#reset-app").addEventListener("click", function () {
     var b = this;
     if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = t("app_settings_confirm"); setTimeout(function () { b.dataset.armed = ""; b.textContent = t("app_settings_btn"); }, 3500); return; }
-    try { localStorage.removeItem("wifi-cfg"); } catch (e) {}
+    try { localStorage.removeItem("wifi-cfg"); localStorage.removeItem("wifi-bio"); localStorage.removeItem("wifi-bio-hint"); } catch (e) {}
     unlocked = false; R = {}; clearInterval(timer); showFirstScreen();
   });
   showFirstScreen();
