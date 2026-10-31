@@ -9,7 +9,10 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.CancellationSignal;
+import android.content.DialogInterface;
 import android.util.Base64;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
@@ -93,6 +96,56 @@ public class MainActivity extends Activity {
     }
 
     public class Bridge {
+        /** True when this phone (Android 10+) has a fingerprint or face enrolled that apps may use. */
+        @JavascriptInterface
+        public boolean biometricAvailable() {
+            if (Build.VERSION.SDK_INT < 29) return false;
+            try {
+                android.hardware.biometrics.BiometricManager bm = getSystemService(android.hardware.biometrics.BiometricManager.class);
+                return bm != null && bm.canAuthenticate() == android.hardware.biometrics.BiometricManager.BIOMETRIC_SUCCESS;
+            } catch (Throwable t) {
+                return false;
+            }
+        }
+
+        /** Shows the system fingerprint dialog. The result goes to window.BioDone(id, ok, code) in the page. id is digits only. */
+        @JavascriptInterface
+        public void biometricAuth(final String id, final String title, final String cancel) {
+            if (Build.VERSION.SDK_INT < 29 || id == null || !id.matches("[0-9]{1,12}")) {
+                callJs("window.BioDone && window.BioDone('" + (id == null ? "0" : id.replaceAll("[^0-9]", "")) + "',false,'na')");
+                return;
+            }
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        final android.hardware.biometrics.BiometricPrompt prompt = new android.hardware.biometrics.BiometricPrompt.Builder(MainActivity.this)
+                                .setTitle(title)
+                                .setNegativeButton(cancel, getMainExecutor(), new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        callJs("window.BioDone && window.BioDone('" + id + "',false,'cancel')");
+                                    }
+                                })
+                                .build();
+                        prompt.authenticate(new CancellationSignal(), getMainExecutor(), new android.hardware.biometrics.BiometricPrompt.AuthenticationCallback() {
+                            @Override
+                            public void onAuthenticationSucceeded(android.hardware.biometrics.BiometricPrompt.AuthenticationResult result) {
+                                callJs("window.BioDone && window.BioDone('" + id + "',true,'')");
+                            }
+
+                            @Override
+                            public void onAuthenticationError(int errorCode, CharSequence errString) {
+                                callJs("window.BioDone && window.BioDone('" + id + "',false,'e" + errorCode + "')");
+                            }
+                        });
+                    } catch (Throwable t) {
+                        callJs("window.BioDone && window.BioDone('" + id + "',false,'na')");
+                    }
+                }
+            });
+        }
+
         /** headers: "Name: value" lines. bodyB64: request body as base64 (empty for none). Result goes to NativeDone/NativeFail in the page. */
         @JavascriptInterface
         public void http(final String id, final String method, final String url, final String headers, final String bodyB64) {
