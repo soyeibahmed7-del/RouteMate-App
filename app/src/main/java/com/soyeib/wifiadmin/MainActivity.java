@@ -8,7 +8,15 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.LinkAddress;
+import android.net.LinkProperties;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.RouteInfo;
 import android.net.Uri;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -23,6 +31,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -96,6 +106,57 @@ public class MainActivity extends Activity {
     }
 
     public class Bridge {
+        /** Wi-Fi details of the phone as JSON (no location permission needed; the Wi-Fi name is only included if Android allows it). */
+        @JavascriptInterface
+        public String networkInfo() {
+            try {
+                org.json.JSONObject o = new org.json.JSONObject();
+                ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                Network n = cm == null ? null : cm.getActiveNetwork();
+                NetworkCapabilities nc = n == null ? null : cm.getNetworkCapabilities(n);
+                boolean wifi = nc != null && nc.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
+                o.put("wifi", wifi);
+                if (wifi) {
+                    LinkProperties lp = cm.getLinkProperties(n);
+                    if (lp != null) {
+                        for (LinkAddress la : lp.getLinkAddresses()) {
+                            InetAddress a = la.getAddress();
+                            if (a instanceof Inet4Address) {
+                                o.put("ip", a.getHostAddress());
+                                int p = la.getPrefixLength();
+                                long m = p <= 0 ? 0L : (0xFFFFFFFFL << (32 - p)) & 0xFFFFFFFFL;
+                                o.put("mask", ((m >> 24) & 255) + "." + ((m >> 16) & 255) + "." + ((m >> 8) & 255) + "." + (m & 255));
+                                break;
+                            }
+                        }
+                        for (RouteInfo r : lp.getRoutes()) {
+                            if (r.isDefaultRoute() && r.getGateway() instanceof Inet4Address) {
+                                o.put("gateway", r.getGateway().getHostAddress());
+                                break;
+                            }
+                        }
+                        for (InetAddress d : lp.getDnsServers()) {
+                            if (d instanceof Inet4Address) {
+                                o.put("dns", d.getHostAddress());
+                                break;
+                            }
+                        }
+                    }
+                    WifiManager wm = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                    WifiInfo wi = wm == null ? null : wm.getConnectionInfo();
+                    if (wi != null) {
+                        o.put("linkMbps", wi.getLinkSpeed());
+                        o.put("freq", wi.getFrequency());
+                        String ss = wi.getSSID();
+                        if (ss != null && !ss.contains("unknown")) o.put("ssid", ss.replace("\"", ""));
+                    }
+                }
+                return o.toString();
+            } catch (Throwable t) {
+                return "{}";
+            }
+        }
+
         /** True when this phone (Android 10+) has a fingerprint or face enrolled that apps may use. */
         @JavascriptInterface
         public boolean biometricAvailable() {
