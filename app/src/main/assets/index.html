@@ -1176,6 +1176,14 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   applyStatic();
   function showFirstScreen() { $("#ni-wrap").hidden = !niInfo(); cfg = loadCfg(); renderBio(); $("#setup").hidden = !!cfg; $("#login").hidden = !cfg; $("#app").hidden = true; }
   var DEF_URL = { ac5: "http://192.168.1.1", f3: "http://192.168.0.1", netis: "http://192.168.1.1" };
+  var MODEL_NAME = { ac5: "Tenda AC5", f3: "Tenda F3", netis: "Netis" }, autoLast = {};
+  function autoName(selId, nameId) {
+    var n = $(nameId), v = n.value.trim();
+    if (!v || v === "Router 1" || v === autoLast[nameId]) { n.value = autoLast[nameId] = MODEL_NAME[$(selId).value] || ""; }
+  }
+  $("#s-type").addEventListener("change", function () { autoName("#s-type", "#s-name"); });
+  $("#a-type").addEventListener("change", function () { autoName("#a-type", "#a-name"); });
+  autoName("#s-type", "#s-name");
   $("#s-type").addEventListener("change", function () { var u = $("#s-url"); if (Object.keys(DEF_URL).some(function (k) { return DEF_URL[k] === u.value.trim(); })) u.value = DEF_URL[this.value]; });
   $("#setup-form").addEventListener("submit", function (e) {
     e.preventDefault();
@@ -1240,7 +1248,7 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
     var useIt = function (type) { var u = $("#s-url"), cur = u.value.trim(); if (!cur || Object.keys(DEF_URL).some(function (k) { return DEF_URL[k] === cur; })) u.value = "http://" + i.gateway; if (type) $("#s-type").value = type; };
     $("#ni-c").onclick = function () { try { Native.copyText(i.gateway); this.textContent = t("ni_copied"); } catch (e) {} };
     useIt("");
-    niDetect(i.gateway).then(function (d) { $("#ni-m").textContent = d.label || t("ni_unk"); if (d.type) useIt(d.type); }, function () { $("#ni-m").textContent = t("ni_unk"); });
+    niDetect(i.gateway).then(function (d) { $("#ni-m").textContent = d.label || t("ni_unk"); if (d.type) { useIt(d.type); autoName("#s-type", "#s-name"); } }, function () { $("#ni-m").textContent = t("ni_unk"); });
   }
   $("#ni-btn").onclick = function () { var c = $("#netcard"); c.hidden = !c.hidden; if (!c.hidden) renderNetCard(); };
   renderNetCard();
