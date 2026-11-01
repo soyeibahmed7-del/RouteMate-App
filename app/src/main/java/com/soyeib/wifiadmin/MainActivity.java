@@ -116,6 +116,10 @@ public class MainActivity extends Activity {
                 NetworkCapabilities nc = n == null ? null : cm.getNetworkCapabilities(n);
                 boolean wifi = nc != null && nc.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
                 o.put("wifi", wifi);
+                try {
+                    WifiManager wm0 = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                    o.put("wifiOn", wm0 != null && wm0.isWifiEnabled());
+                } catch (Throwable t0) {}
                 if (wifi) {
                     LinkProperties lp = cm.getLinkProperties(n);
                     if (lp != null) {
@@ -265,6 +269,19 @@ public class MainActivity extends Activity {
             try {
                 if (url == null || !(url.startsWith("http://") || url.startsWith("https://") || url.startsWith("tel:"))) return false;
                 Intent i = new Intent(url.startsWith("tel:") ? Intent.ACTION_DIAL : Intent.ACTION_VIEW, Uri.parse(url));
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(i);
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
+        /** Opens the phone's Wi-Fi settings screen. */
+        @JavascriptInterface
+        public boolean openWifiSettings() {
+            try {
+                Intent i = new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS);
                 i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(i);
                 return true;
