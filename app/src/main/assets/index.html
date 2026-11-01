@@ -1259,7 +1259,7 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   window.addEventListener("focus", wifiBar);
   wifiBar();
   document.addEventListener("click", function (e) {
-    var c = $("#netcard"); if (c.hidden || e.target.closest("#ni-btn") || e.target.closest("#netcard button")) return;
+    var c = $("#netcard"); if (c.hidden || e.target.closest("#ni-btn") || e.target.closest("#netcard")) return;
     c.hidden = true;
   }, true);
   $("#ni-btn").onclick = function () { var c = $("#netcard"); c.hidden = !c.hidden; if (!c.hidden) renderNetCard(); };
