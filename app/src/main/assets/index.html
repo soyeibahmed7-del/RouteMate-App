@@ -1204,9 +1204,32 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
       return tryTypes(url, pw, ["ac5", "f3", "netis"]).then(function (r) { r.notes.unshift("detected:none"); return r; });
     });
   }
-  function makeReport(url, r, extra) {
-    var h = hostOf(url), priv = /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h) ? "private-ip" : "other-host";
-    return "RouteMate test report\naddress: " + priv + "\nresult: " + (r.notes || []).join(", ") + (extra ? "\nerror: " + String(extra).slice(0, 120) : "");
+  function makeReport(url, r, extra, fp) {
+    var h = hostOf(url), priv = /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h) ? h.replace(/:\d+$/, "") : "other-host";
+    return "RouteMate test report v2\naddress: " + priv + "\nresult: " + (r.notes || []).join(", ") + (extra ? "\nerror: " + String(extra).slice(0, 120) : "") + (fp ? "\npages:\n" + fp : "");
+  }
+  // Page-shape clues for the test report. Never passwords, tokens, MACs or outside addresses: only titles, form field names, cookie names, file names.
+  var FP_PATHS = ["/", "/cgi-bin/luci/", "/login.html", "/index.html", "/webpages/login.html", "/userRpm/LoginRpm.htm", "/login.cgi", "/cgi-bin/skk_get.cgi", "/goform/getstok?random=1"];
+  var FP_KW = ["tenda", "netis", "cudy", "tp-link", "tplink", "mercusys", "huawei", "d-link", "xiaomi", "zte", "luci", "openwrt", "md5", "rsa", "aes", "sha256"];
+  function fpClean(s) { return String(s || "").replace(/\b\d{1,3}(\.\d{1,3}){3}\b/g, "<ip>").replace(/\b[0-9a-f]{2}([:-][0-9a-f]{2}){5}\b/gi, "<mac>").replace(/[A-Za-z0-9_\-]{20,}/g, "<tok>").replace(/\s+/g, " ").trim(); }
+  function fpPath(s) { return fpClean(String(s || "").replace(/^https?:\/\/[^\/]*/, "").replace(/[;?#].*$/, "")).slice(0, 60); }
+  function fpAll(re, s, max) { var out = [], m; while ((m = re.exec(s)) && out.length < max) { if (out.indexOf(m[1]) < 0) out.push(m[1]); } return out; }
+  function fingerprint(host) {
+    var base = "http://" + host;
+    return Promise.all(FP_PATHS.map(function (p) {
+      var shown = p.split("?")[0];
+      return niGet(base + p).then(function (r) {
+        if (!r) return shown + " no-answer";
+        var s = String(r.text || "").slice(0, 40000), low = s.toLowerCase(), tm = s.match(/<title[^>]*>([^<]{0,80})/i);
+        var kw = FP_KW.filter(function (k) { return low.indexOf(k) >= 0; });
+        var inputs = fpAll(/<input[^>]*\sname=["']([^"']{1,30})["']/gi, s, 8).map(fpClean);
+        var js = fpAll(/<script[^>]*\ssrc=["']([^"'?#]{1,80})/gi, s, 6).map(function (x) { return fpClean(x.split("/").pop()).slice(0, 30); });
+        var act = fpAll(/<form[^>]*\saction=["']([^"']{1,80})/gi, s, 2).map(fpPath);
+        var ck = (r.cookies || []).map(function (c) { return fpClean(String(c).split("=")[0]).slice(0, 20); }).filter(Boolean);
+        return shown + " " + r.status + " len=" + s.length + (r.location ? " loc=" + fpPath(r.location) : "") + (tm ? ' title="' + fpClean(tm[1]).slice(0, 50) + '"' : "") +
+          (kw.length ? " kw=" + kw.join(",") : "") + (inputs.length ? " inputs=" + inputs.join(",") : "") + (act.length ? " form=" + act.join(",") : "") + (js.length ? " js=" + js.join(",") : "") + (ck.length ? " cookie=" + ck.join(",") : "");
+      }, function () { return shown + " error"; });
+    })).then(function (lines) { return lines.join("\n"); }, function () { return ""; });
   }
   $("#rep-btn").addEventListener("click", function () { try { Native.copyText(lastReport); this.textContent = t("rep_done"); } catch (e) {} });
   $("#setup-form").addEventListener("submit", function (e) {
@@ -1220,7 +1243,10 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
     var rtype = "", rep = $("#rep-btn"); rep.hidden = true;
     resolveType(url, rpw, $("#s-type").value).then(function (r) {
       rtype = r.type; lastReport = makeReport(url, r, "");
-      if (!rtype) { rep.hidden = false; rep.textContent = t("rep_copy"); throw new Error(r.notes && r.notes.some(function (n) { return /rejected/.test(n); }) ? t("s_rbad") : t("s_unk")); }
+      if (!rtype) {
+        var msg = r.notes && r.notes.some(function (n) { return /rejected/.test(n); }) ? t("s_rbad") : t("s_unk");
+        return fingerprint(hostOf(url)).then(function (fp) { lastReport = makeReport(url, r, "", fp); rep.hidden = false; rep.textContent = t("rep_copy"); throw new Error(msg); });
+      }
       return new RouterClient({ url: url, password: rpw, native: nativeApi, type: rtype }).login();
     }).then(function (ok) {
       if (!ok) throw new Error(t("s_rbad"));
