@@ -1208,7 +1208,7 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   }
   function makeReport(url, r, extra, fp) {
     var h = hostOf(url), priv = /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h) ? h.replace(/:\d+$/, "") : "other-host";
-    return "RouteMate test report v4\naddress: " + priv + "\nresult: " + (r.notes || []).join(", ") + (extra ? "\nerror: " + String(extra).slice(0, 120) : "") + (fp ? "\npages:\n" + fp : "");
+    return "RouteMate test report v5\naddress: " + priv + "\nresult: " + (r.notes || []).join(", ") + (extra ? "\nerror: " + String(extra).slice(0, 120) : "") + (fp ? "\npages:\n" + fp : "");
   }
   // Page-shape clues for the test report. Never passwords, tokens, MACs or outside addresses: only titles, form field names, cookie names, file names.
   var FP_PATHS = ["/", "/cgi-bin/luci/", "/login.html", "/index.html", "/webpages/login.html", "/userRpm/LoginRpm.htm", "/login.cgi", "/cgi-bin/skk_get.cgi", "/goform/getstok?random=1"];
@@ -1233,12 +1233,17 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   function fpScripts(base, html) {
     var s = String(html || "").slice(0, 60000), jobs = [], re = /<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/gi, m, n = 0;
     while ((m = re.exec(s)) && n < 4) { var line = fpSnips("inline" + (++n), m[1], 4); if (line) jobs.push(Promise.resolve(line)); }
-    var own = fpAll(/<script[^>]*\ssrc=["']([^"'#]{1,120})/gi, s, 25).filter(function (x) { return !FP_LIB.test(x) && !/^https?:\/\//i.test(x); });
+    var all = fpAll(/<script[^>]*\ssrc=["']([^"'#]{1,160})/gi, s, 40);
+    // Judge a file by its own name, not its folder (folders like /bootstrap/ also hold the login script).
+    var own = all.map(function (x) { return x.indexOf(base) === 0 ? x.slice(base.length) : x; }).filter(function (x) { return !/^(https?:)?\/\//i.test(x) && !FP_LIB.test(x.split("?")[0].split("/").pop()); });
+    jobs.unshift(Promise.resolve("scripts: " + (own.length ? own.slice(0, 12).map(fpPath).join(" ") : "none-found(of " + all.length + ")")));
     // Login-looking files first, so they are never cut off by the limit.
     own.sort(function (a, b) { return (/sysauth|login|auth/i.test(b) ? 1 : 0) - (/sysauth|login|auth/i.test(a) ? 1 : 0); });
     own.slice(0, 6).forEach(function (x) {
-      var p = x.replace(/\?.*$/, ""), u = base + (p.charAt(0) === "/" ? "" : "/cgi-bin/luci/") + p, nm = fpPath(p).split("/").pop() || "script";
-      jobs.push(niGet(u).then(function (r) {
+      var p, nm;
+      try { p = new URL(x, "http://x/cgi-bin/luci/").pathname; } catch (e) { return; }
+      nm = fpPath(p).split("/").pop() || "script";
+      jobs.push(niGet(base + p).then(function (r) {
         if (!r) return "js:" + nm + " no-answer";
         var txt = String(r.text || "").slice(0, 120000);
         return r.status === 200 ? (fpSnips(nm, txt, 5, true) || "js:" + nm + " 200 len=" + txt.length + " (no hash words)") : "js:" + nm + " status=" + r.status + " len=" + txt.length;
