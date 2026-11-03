@@ -18,7 +18,17 @@ jobs:
       - run: node tests/test-ai.js
       - uses: gradle/actions/setup-gradle@v4
         with: { gradle-version: '8.7' }
+      - name: Prepare fixed signing key
+        env: { KEYSTORE_B64: '${{ secrets.KEYSTORE_B64 }}' }
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/routermate.jks"
+            echo "KEYSTORE_FILE=$RUNNER_TEMP/routermate.jks" >> "$GITHUB_ENV"
+          else
+            echo "::warning::KEYSTORE_B64 secret missing: building with a temporary debug key (updates will not install over older builds)"
+          fi
       - run: gradle --no-daemon assembleDebug
+        env: { KEYSTORE_PASSWORD: '${{ secrets.KEYSTORE_PASSWORD }}', KEY_ALIAS: '${{ secrets.KEY_ALIAS }}' }
       - uses: actions/upload-artifact@v4
         with:
           name: wifi-admin-apk

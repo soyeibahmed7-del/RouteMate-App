@@ -14,7 +14,24 @@ android {
         versionName "1.0"
     }
 
+    // Fixed signing key (from CI secrets) so every build has the same signature and updates install over old ones.
+    // Without the secrets (for example a local build) it falls back to the normal debug key.
+    def ksPath = System.getenv("KEYSTORE_FILE")
+    def hasKs = ksPath && file(ksPath).exists()
+    signingConfigs {
+        routermate {
+            if (hasKs) {
+                storeFile file(ksPath)
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias System.getenv("KEY_ALIAS") ?: "routermate"
+                keyPassword System.getenv("KEYSTORE_PASSWORD")
+            }
+        }
+    }
     buildTypes {
+        debug {
+            if (hasKs) signingConfig signingConfigs.routermate
+        }
         release {
             minifyEnabled false
         }
