@@ -358,12 +358,32 @@ h1 { font-size: 26px; }
 .wifi-bar{position:fixed;top:0;left:0;right:0;z-index:99;border:0;padding:calc(8px + env(safe-area-inset-top,0px)) 14px 8px;background:#e8590c;color:#fff;font:inherit;font-weight:700;font-size:14px;text-align:center;cursor:pointer}
 .wifi-bar[hidden]{display:none}
 body.wbar .ni-wrap{top:48px}
+.help-fab{position:fixed;top:8px;right:8px;z-index:50;width:34px;height:34px;padding:0;border-radius:50%;font:inherit;font-weight:800;font-size:16px;border:1px solid rgba(120,160,255,.4);background:rgba(10,20,45,.85);color:#dbe6ff;cursor:pointer}
+.help-fab[hidden]{display:none}
+body.wbar .help-fab{top:48px}
+.help-sm{width:34px;height:34px;padding:0;border-radius:50%;font-weight:800}
+.hsheet{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(2,8,20,.72)}
+.hsheet[hidden]{display:none}
+.hcard{width:100%;max-width:360px;background:rgba(10,20,45,.98);border:1px solid rgba(120,160,255,.3);border-radius:18px;padding:16px;color:#e6eeff}
+.hcard h3{margin:0 0 2px;font-size:18px}.hcard .hs{opacity:.7;font-size:12.5px;margin-bottom:12px}
+.hrow{border:1px solid rgba(120,160,255,.2);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.hrow small{display:block;opacity:.65;font-size:11.5px}.hrow b{display:block;font-size:15px;word-break:break-all;margin:2px 0 8px}
+.hrow .hb{display:flex;gap:8px;flex-wrap:wrap}
+.isp-form .field{margin-top:10px}
+.isp-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 </style>
 </head>
 <body>
 
 <button type="button" id="wifi-bar" class="wifi-bar" hidden></button>
 <div class="ni-wrap" id="ni-wrap"><button id="ni-btn" type="button" aria-label="Wi-Fi info">&#128246; Wi-Fi</button><div class="netcard" id="netcard" hidden></div></div>
+<button class="help-fab" id="help-first" type="button" aria-label="Help" data-i18n-title="help_title">?</button>
+<div class="hsheet" id="help-sheet" hidden><div class="hcard" role="dialog" aria-modal="true">
+  <h3 data-i18n="help_title"></h3><div class="hs" data-i18n="help_sub"></div>
+  <div class="hrow"><small data-i18n="help_mail"></small><b id="help-mail"></b><div class="hb"><button class="btn" type="button" id="help-mail-open" data-i18n="help_mail_open"></button><button class="btn" type="button" id="help-mail-copy" data-i18n="help_copy"></button></div></div>
+  <div class="hrow"><small data-i18n="help_wa"></small><b id="help-wa"></b><div class="hb"><button class="btn" type="button" id="help-wa-open" data-i18n="help_wa_open"></button><button class="btn" type="button" id="help-wa-copy" data-i18n="help_copy"></button></div></div>
+  <button class="btn primary" type="button" id="help-close" style="width:100%" data-i18n="help_close"></button>
+</div></div>
 <section id="setup" hidden>
   <div class="login-top"><button class="btn sm" type="button" data-lang-toggle></button></div>
   <div class="login">
@@ -429,6 +449,7 @@ body.wbar .ni-wrap{top:48px}
       <div class="top-actions">
         <span class="pill good" id="conn"></span>
         <button class="btn" id="open-router" type="button" aria-label="Router page" data-i18n-title="router_page" title="Router page"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20a15 15 0 0 1 0-20"/></svg></button>
+        <button class="btn help-sm" id="help-btn" type="button" aria-label="Help" data-i18n-title="help_title" title="Help">?</button>
       </div>
     </div>
     <div class="chips" id="rbar" hidden></div>
@@ -476,15 +497,22 @@ body.wbar .ni-wrap{top:48px}
     </div></section>
 
     <section class="view" id="view-settings" hidden><div class="main">
-      <div class="panel">
+      <div class="panel" id="isp-panel">
         <h2 data-i18n="isp_title"></h2>
         <p class="hint" id="isp-num"></p>
-        <div class="isp-btns">
+        <div class="isp-btns" id="isp-btns" hidden>
           <button class="isp-b" type="button" id="isp-wa" data-i18n-title="isp_wa"><span class="isp-fb" data-i18n="isp_wa"></span></button>
           <button class="isp-b" type="button" id="isp-call" data-i18n-title="isp_call"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg></button>
           <button class="isp-b" type="button" id="isp-bkash" data-i18n-title="isp_bkash"><span class="isp-fb" data-i18n="isp_bkash"></span></button>
           <button class="isp-b" type="button" id="isp-imo" data-i18n-title="isp_imo"><span class="isp-fb" data-i18n="isp_imo"></span></button>
         </div>
+        <div class="isp-acts"><button class="btn primary" type="button" id="isp-add" data-i18n="isp_add"></button></div>
+        <form id="isp-form" class="isp-form" autocomplete="off" hidden>
+          <div class="field"><label for="isp-name" data-i18n="isp_name"></label><input id="isp-name" type="text" maxlength="40"></div>
+          <div class="field"><label for="isp-in" data-i18n="isp_phone"></label><input id="isp-in" type="tel" inputmode="tel" placeholder="01XXXXXXXXX"></div>
+          <div class="login-err" id="isp-err" role="alert"></div>
+          <div class="isp-acts"><button class="btn primary" type="submit" data-i18n="isp_save"></button><button class="btn" type="button" id="isp-cancel" data-i18n="isp_cancel"></button><button class="btn" type="button" id="isp-del" data-i18n="isp_remove"></button></div>
+        </form>
       </div>
       <div class="panel">
         <h2 data-i18n="set_lang"></h2>
@@ -553,7 +581,7 @@ body.wbar .ni-wrap{top:48px}
 (function () {
   var T = {
     en: {
-      brand: "RouteMate", s_auto: "Auto (find my router)", s_unk: "This router is not supported yet. Tap Copy test report and send it to the developer.", rep_copy: "Copy test report", rep_done: "Report copied", wb_off: "Wi-Fi is off. Tap to turn on your Wi-Fi", wb_no: "Not connected to Wi-Fi. Tap to open Wi-Fi settings", ni_title: "Your Wi-Fi", ni_conn: "Connected Wi-Fi", ni_off: "Not on Wi-Fi", ni_off_h: "Connect to your router's Wi-Fi first.", ni_ssid: "Wi-Fi", ni_ip: "Device IP", ni_mask: "Subnet mask", ni_gw: "Router address", ni_dns: "Primary DNS", ni_link: "Link speed", ni_router: "Router", ni_use: "Use", ni_copy: "Copy", ni_copied: "Copied", ni_unk: "Not detected", ni_look: "Detecting…", ni_ref: "Refresh", ni_note: "Exact model shows after you log in.", bio_title: "Unlock RouteMate", bio_cancel: "Use app password", bio_unlock: "Unlock with fingerprint", bio_set_t: "Fingerprint unlock", bio_dev: "Device biometrics", bio_dev_s: "Protected by your phone's fingerprint security", bio_set_p: "Open the app with your fingerprint instead of typing the app password.", bio_on: "On", bio_off: "Off", bio_na: "Not available: this phone is older than Android 10 or has no fingerprint set up in its settings.", bio_enabled: "Fingerprint unlock is on.", bio_failed: "Fingerprint was not confirmed.", nav_ai: "AI", title_ai: "AI Assistant", at_chat: "Assistant", at_health: "Health", at_dev: "Devices", at_sec: "Security", ai_ph: "Ask or tell me what to do…", ai_send: "Send", ai_clear: "Clear chat", ai_think: "Thinking…", ai_hello: "Hi! I can show devices, explain slow WiFi, block/unblock, blacklist, limit or rename a device, and mark devices as known. Try one below.", ai_setup_t: "AI is not set up yet", ai_setup_p: "The chat needs your own AI backend (it keeps the Gemini key safe, outside the app). Health, Devices and Security tabs work without it. Add the backend link in Settings.", ai_goset: "Open Settings", q1: "Which device uses the most bandwidth?", q2: "Why is my WiFi slow?", q3: "Show blacklisted devices", q4: "Is anything unusual on my network?",
+      brand: "RouteMate", isp_add: "Add ISP number", isp_edit: "Edit ISP number", isp_name: "ISP name (optional)", isp_phone: "ISP phone number", isp_save: "Save", isp_cancel: "Cancel", isp_remove: "Remove", isp_bad: "Enter a valid phone number, for example 01XXXXXXXXX.", isp_saved: "ISP number saved.", isp_none: "No ISP number yet. Add your ISP's number to call or message it from here.", help_title: "Help", help_sub: "Contact the developer", help_mail: "Gmail", help_wa: "WhatsApp", help_mail_open: "Send email", help_wa_open: "Open WhatsApp", help_copy: "Copy", help_copied: "Copied", help_close: "Close", s_auto: "Auto (find my router)", s_unk: "This router is not supported yet. Tap Copy test report and send it to the developer.", rep_copy: "Copy test report", rep_done: "Report copied", wb_off: "Wi-Fi is off. Tap to turn on your Wi-Fi", wb_no: "Not connected to Wi-Fi. Tap to open Wi-Fi settings", ni_title: "Your Wi-Fi", ni_conn: "Connected Wi-Fi", ni_off: "Not on Wi-Fi", ni_off_h: "Connect to your router's Wi-Fi first.", ni_ssid: "Wi-Fi", ni_ip: "Device IP", ni_mask: "Subnet mask", ni_gw: "Router address", ni_dns: "Primary DNS", ni_link: "Link speed", ni_router: "Router", ni_use: "Use", ni_copy: "Copy", ni_copied: "Copied", ni_unk: "Not detected", ni_look: "Detecting…", ni_ref: "Refresh", ni_note: "Exact model shows after you log in.", bio_title: "Unlock RouteMate", bio_cancel: "Use app password", bio_unlock: "Unlock with fingerprint", bio_set_t: "Fingerprint unlock", bio_dev: "Device biometrics", bio_dev_s: "Protected by your phone's fingerprint security", bio_set_p: "Open the app with your fingerprint instead of typing the app password.", bio_on: "On", bio_off: "Off", bio_na: "Not available: this phone is older than Android 10 or has no fingerprint set up in its settings.", bio_enabled: "Fingerprint unlock is on.", bio_failed: "Fingerprint was not confirmed.", nav_ai: "AI", title_ai: "AI Assistant", at_chat: "Assistant", at_health: "Health", at_dev: "Devices", at_sec: "Security", ai_ph: "Ask or tell me what to do…", ai_send: "Send", ai_clear: "Clear chat", ai_think: "Thinking…", ai_hello: "Hi! I can show devices, explain slow WiFi, block/unblock, blacklist, limit or rename a device, and mark devices as known. Try one below.", ai_setup_t: "AI is not set up yet", ai_setup_p: "The chat needs your own AI backend (it keeps the Gemini key safe, outside the app). Health, Devices and Security tabs work without it. Add the backend link in Settings.", ai_goset: "Open Settings", q1: "Which device uses the most bandwidth?", q2: "Why is my WiFi slow?", q3: "Show blacklisted devices", q4: "Is anything unusual on my network?",
 aiset_t: "AI backend", aiset_p: "Link and token from your Cloudflare Worker. They are saved only on this phone. See ai-backend/README.md.", aiset_url: "Backend link", aiset_tok: "App token", aiset_off: "Remove", ai_saved: "Saved.", ai_removed: "Removed.",
 ae_auth: "The backend rejected the token. Check the app token in Settings.", ae_busy: "The AI is busy or the free limit is used up. Try again in a minute.", ae_backend: "The AI backend returned an error ({s}).", ae_net: "Could not reach the AI backend. Check the link and your internet.", ae_empty: "The AI gave no answer. Try again.", ae_many: "That took too many steps. Please ask in a simpler way.",
 ax_ok: "Done and confirmed by the router", ax_fail: "Not done", ax_read: "Checked router data", fn_block_device: "Block", fn_unblock_device: "Unblock", fn_blacklist_add: "Add to blacklist", fn_blacklist_remove: "Remove from blacklist", fn_set_speed_limit: "Speed limit", fn_rename_device: "Rename", fn_mark_known: "Mark known", fn_mark_unknown: "Mark unknown", fn_blacklist_show: "Access list", fn_list_devices: "Devices", fn_top_bandwidth: "Top bandwidth", fn_network_health: "Health",
@@ -581,7 +609,7 @@ sa_title: "Security Advisor", sa_ok: "No security problem is visible in the data
       x_blocked: "{n} blocked", x_unblocked: "{n} can use the internet again", x_limit: "{n}: {l}", updated: "Updated", confirm_block: "Tap again to block", err_prefix: "Router problem: "
     },
     bn: {
-      brand: "RouteMate", s_auto: "অটো (নিজে রাউটার খুঁজে নেবে)", s_unk: "এই রাউটার এখনো সমর্থিত নয়। \"টেস্ট রিপোর্ট কপি\" চেপে ডেভেলপারকে পাঠান।", rep_copy: "টেস্ট রিপোর্ট কপি", rep_done: "রিপোর্ট কপি হয়েছে", wb_off: "ওয়াইফাই বন্ধ আছে। ট্যাপ করে ওয়াইফাই চালু করুন", wb_no: "ওয়াইফাই-তে যুক্ত নেই। ট্যাপ করে ওয়াইফাই সেটিংস খুলুন", ni_title: "আপনার ওয়াইফাই", ni_conn: "ওয়াইফাই সংযুক্ত", ni_off: "ওয়াইফাই-তে নেই", ni_off_h: "আগে রাউটারের ওয়াইফাই-তে যুক্ত হন।", ni_ssid: "ওয়াইফাই", ni_ip: "ডিভাইস আইপি", ni_mask: "সাবনেট মাস্ক", ni_gw: "রাউটার ঠিকানা", ni_dns: "প্রাইমারি ডিএনএস", ni_link: "লিঙ্ক স্পিড", ni_router: "রাউটার", ni_use: "ব্যবহার", ni_copy: "কপি", ni_copied: "কপি হয়েছে", ni_unk: "শনাক্ত হয়নি", ni_look: "খোঁজা হচ্ছে…", ni_ref: "রিফ্রেশ", ni_note: "সঠিক মডেল লগইনের পর দেখা যাবে।", bio_title: "RouteMate আনলক করুন", bio_cancel: "অ্যাপ পাসওয়ার্ড দিন", bio_unlock: "আঙুলের ছাপ দিয়ে আনলক", bio_set_t: "আঙুলের ছাপে আনলক", bio_dev: "ডিভাইস বায়োমেট্রিক্স", bio_dev_s: "আপনার ফোনের ফিঙ্গারপ্রিন্ট সুরক্ষায় সুরক্ষিত", bio_set_p: "অ্যাপ পাসওয়ার্ড টাইপ না করে আঙুলের ছাপ দিয়ে অ্যাপ খুলুন।", bio_on: "চালু", bio_off: "বন্ধ", bio_na: "পাওয়া যাচ্ছে না: এই ফোন অ্যান্ড্রয়েড ১০-এর পুরনো, বা ফোনের সেটিংসে আঙুলের ছাপ সেট করা নেই।", bio_enabled: "আঙুলের ছাপে আনলক চালু হয়েছে।", bio_failed: "আঙুলের ছাপ মেলেনি।", nav_ai: "এআই", title_ai: "এআই সহকারী", at_chat: "সহকারী", at_health: "স্বাস্থ্য", at_dev: "ডিভাইস", at_sec: "নিরাপত্তা", ai_ph: "প্রশ্ন করুন বা কাজ বলুন…", ai_send: "পাঠান", ai_clear: "চ্যাট মুছুন", ai_think: "ভাবছি…", ai_hello: "হাই! আমি ডিভাইস দেখাতে, ধীর ওয়াইফাইয়ের কারণ বলতে, ডিভাইস ব্লক/আনব্লক, ব্ল্যাকলিস্ট, গতি সীমা, নাম বদল আর পরিচিত চিহ্ন দিতে পারি। নিচের একটা চেষ্টা করুন।", ai_setup_t: "এআই এখনও সেট করা হয়নি", ai_setup_p: "চ্যাটের জন্য আপনার নিজের এআই ব্যাকএন্ড লাগবে (এটা Gemini কী অ্যাপের বাইরে নিরাপদ রাখে)। স্বাস্থ্য, ডিভাইস ও নিরাপত্তা ট্যাব এটা ছাড়াই চলে। সেটিংসে ব্যাকএন্ডের লিংক দিন।", ai_goset: "সেটিংস খুলুন", q1: "কোন ডিভাইস সবচেয়ে বেশি ডেটা নিচ্ছে?", q2: "আমার ওয়াইফাই ধীর কেন?", q3: "ব্ল্যাকলিস্ট করা ডিভাইস দেখাও", q4: "আমার নেটওয়ার্কে অস্বাভাবিক কিছু আছে?",
+      brand: "RouteMate", isp_add: "ISP নম্বর যোগ করুন", isp_edit: "ISP নম্বর বদলান", isp_name: "ISP-র নাম (ঐচ্ছিক)", isp_phone: "ISP-র ফোন নম্বর", isp_save: "সেভ", isp_cancel: "বাতিল", isp_remove: "সরান", isp_bad: "সঠিক ফোন নম্বর দিন, যেমন 01XXXXXXXXX।", isp_saved: "ISP নম্বর সেভ হয়েছে।", isp_none: "এখনো ISP-র নম্বর দেওয়া নেই। ISP-র নম্বর যোগ করলে এখান থেকেই কল বা মেসেজ করতে পারবেন।", help_title: "সাহায্য", help_sub: "ডেভেলপারের সাথে যোগাযোগ করুন", help_mail: "জিমেইল", help_wa: "হোয়াটসঅ্যাপ", help_mail_open: "ইমেইল পাঠান", help_wa_open: "হোয়াটসঅ্যাপ খুলুন", help_copy: "কপি", help_copied: "কপি হয়েছে", help_close: "বন্ধ করুন", s_auto: "অটো (নিজে রাউটার খুঁজে নেবে)", s_unk: "এই রাউটার এখনো সমর্থিত নয়। \"টেস্ট রিপোর্ট কপি\" চেপে ডেভেলপারকে পাঠান।", rep_copy: "টেস্ট রিপোর্ট কপি", rep_done: "রিপোর্ট কপি হয়েছে", wb_off: "ওয়াইফাই বন্ধ আছে। ট্যাপ করে ওয়াইফাই চালু করুন", wb_no: "ওয়াইফাই-তে যুক্ত নেই। ট্যাপ করে ওয়াইফাই সেটিংস খুলুন", ni_title: "আপনার ওয়াইফাই", ni_conn: "ওয়াইফাই সংযুক্ত", ni_off: "ওয়াইফাই-তে নেই", ni_off_h: "আগে রাউটারের ওয়াইফাই-তে যুক্ত হন।", ni_ssid: "ওয়াইফাই", ni_ip: "ডিভাইস আইপি", ni_mask: "সাবনেট মাস্ক", ni_gw: "রাউটার ঠিকানা", ni_dns: "প্রাইমারি ডিএনএস", ni_link: "লিঙ্ক স্পিড", ni_router: "রাউটার", ni_use: "ব্যবহার", ni_copy: "কপি", ni_copied: "কপি হয়েছে", ni_unk: "শনাক্ত হয়নি", ni_look: "খোঁজা হচ্ছে…", ni_ref: "রিফ্রেশ", ni_note: "সঠিক মডেল লগইনের পর দেখা যাবে।", bio_title: "RouteMate আনলক করুন", bio_cancel: "অ্যাপ পাসওয়ার্ড দিন", bio_unlock: "আঙুলের ছাপ দিয়ে আনলক", bio_set_t: "আঙুলের ছাপে আনলক", bio_dev: "ডিভাইস বায়োমেট্রিক্স", bio_dev_s: "আপনার ফোনের ফিঙ্গারপ্রিন্ট সুরক্ষায় সুরক্ষিত", bio_set_p: "অ্যাপ পাসওয়ার্ড টাইপ না করে আঙুলের ছাপ দিয়ে অ্যাপ খুলুন।", bio_on: "চালু", bio_off: "বন্ধ", bio_na: "পাওয়া যাচ্ছে না: এই ফোন অ্যান্ড্রয়েড ১০-এর পুরনো, বা ফোনের সেটিংসে আঙুলের ছাপ সেট করা নেই।", bio_enabled: "আঙুলের ছাপে আনলক চালু হয়েছে।", bio_failed: "আঙুলের ছাপ মেলেনি।", nav_ai: "এআই", title_ai: "এআই সহকারী", at_chat: "সহকারী", at_health: "স্বাস্থ্য", at_dev: "ডিভাইস", at_sec: "নিরাপত্তা", ai_ph: "প্রশ্ন করুন বা কাজ বলুন…", ai_send: "পাঠান", ai_clear: "চ্যাট মুছুন", ai_think: "ভাবছি…", ai_hello: "হাই! আমি ডিভাইস দেখাতে, ধীর ওয়াইফাইয়ের কারণ বলতে, ডিভাইস ব্লক/আনব্লক, ব্ল্যাকলিস্ট, গতি সীমা, নাম বদল আর পরিচিত চিহ্ন দিতে পারি। নিচের একটা চেষ্টা করুন।", ai_setup_t: "এআই এখনও সেট করা হয়নি", ai_setup_p: "চ্যাটের জন্য আপনার নিজের এআই ব্যাকএন্ড লাগবে (এটা Gemini কী অ্যাপের বাইরে নিরাপদ রাখে)। স্বাস্থ্য, ডিভাইস ও নিরাপত্তা ট্যাব এটা ছাড়াই চলে। সেটিংসে ব্যাকএন্ডের লিংক দিন।", ai_goset: "সেটিংস খুলুন", q1: "কোন ডিভাইস সবচেয়ে বেশি ডেটা নিচ্ছে?", q2: "আমার ওয়াইফাই ধীর কেন?", q3: "ব্ল্যাকলিস্ট করা ডিভাইস দেখাও", q4: "আমার নেটওয়ার্কে অস্বাভাবিক কিছু আছে?",
 aiset_t: "এআই ব্যাকএন্ড", aiset_p: "আপনার Cloudflare Worker-এর লিংক ও টোকেন। এগুলো শুধু এই ফোনে থাকে। ai-backend/README.md দেখুন।", aiset_url: "ব্যাকএন্ড লিংক", aiset_tok: "অ্যাপ টোকেন", aiset_off: "সরান", ai_saved: "সেভ হয়েছে।", ai_removed: "সরানো হয়েছে।",
 ae_auth: "ব্যাকএন্ড টোকেন গ্রহণ করেনি। সেটিংসে টোকেন মিলিয়ে দেখুন।", ae_busy: "এআই ব্যস্ত বা ফ্রি সীমা শেষ। এক মিনিট পরে আবার চেষ্টা করুন।", ae_backend: "এআই ব্যাকএন্ডে সমস্যা ({s})।", ae_net: "এআই ব্যাকএন্ডে পৌঁছানো যায়নি। লিংক ও ইন্টারনেট দেখুন।", ae_empty: "এআই কোনো উত্তর দেয়নি। আবার চেষ্টা করুন।", ae_many: "অনেক ধাপ লেগে গেছে। সহজ করে আবার বলুন।",
 ax_ok: "হয়েছে, রাউটার নিশ্চিত করেছে", ax_fail: "হয়নি", ax_read: "রাউটারের তথ্য দেখা হয়েছে", fn_block_device: "ব্লক", fn_unblock_device: "আনব্লক", fn_blacklist_add: "ব্ল্যাকলিস্টে যোগ", fn_blacklist_remove: "ব্ল্যাকলিস্ট থেকে সরানো", fn_set_speed_limit: "গতি সীমা", fn_rename_device: "নাম বদল", fn_mark_known: "পরিচিত চিহ্ন", fn_mark_unknown: "পরিচিত চিহ্ন তোলা", fn_blacklist_show: "অ্যাক্সেস তালিকা", fn_list_devices: "ডিভাইস", fn_top_bandwidth: "সবচেয়ে বেশি ব্যবহার", fn_network_health: "স্বাস্থ্য",
@@ -696,6 +724,7 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
     document.querySelectorAll("[data-i18n-title]").forEach(function (el) { el.title = t(el.dataset.i18nTitle); el.setAttribute("aria-label", el.title); });
     document.querySelectorAll("[data-i18n-ph]").forEach(function (el) { el.placeholder = t(el.dataset.i18nPh); });
     document.querySelectorAll("[data-lang-toggle]").forEach(function (el) { el.textContent = t("lang_btn"); });
+    try { ispRender(); } catch (e) {}
     renderRoute(); renderAll();
   }
   document.querySelectorAll("[data-lang-toggle]").forEach(function (b) { b.addEventListener("click", function () { lang = lang === "en" ? "bn" : "en"; try { localStorage.setItem("wifi-lang", lang); } catch (e) {} applyStatic(); renderAcl(); markLang(); }); });
@@ -881,7 +910,7 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   }
   function start() {
     acl.loaded = false; acl.busy = false; acl.rid = ""; sel = "all"; R = {}; buildClients();
-    $("#setup").hidden = true; $("#login").hidden = true; $("#app").hidden = false; $("#ni-wrap").hidden = true; readHash();
+    $("#setup").hidden = true; $("#login").hidden = true; $("#app").hidden = false; $("#ni-wrap").hidden = true; $("#help-first").hidden = true; readHash();
     poll(); clearInterval(timer); timer = setInterval(poll, 6000);
   }
   function signedOut() { clearInterval(timer); user = null; unlocked = false; R = {}; $("#app").hidden = true; $("#setup").hidden = !!loadCfg(); $("#login").hidden = !loadCfg(); }
@@ -1029,10 +1058,26 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
     }, { passive: true });
     document.addEventListener("touchcancel", function () { y0 = null; hide(); }, { passive: true });
   })();
-  // ---- ISP contact buttons ----
-  var ISP_NUM = "+8801407063150", ISP_DIGITS = "8801407063150", BKASH_PKG = "com.bKash.customerapp";
-  $("#isp-num").textContent = ISP_NUM;
-  var IMO_PKG = "com.imo.android.imoim";
+  // ---- ISP contact buttons: each user saves their own ISP number on this phone ----
+  var BKASH_PKG = "com.bKash.customerapp", IMO_PKG = "com.imo.android.imoim";
+  function ispLoad() { try { var o = JSON.parse(localStorage.getItem("rm-isp") || "null"); return o && o.num ? o : null; } catch (e) { return null; } }
+  function ispNum() { var d = ispLoad(); return d ? d.num : ""; }
+  // Accepts 01XXXXXXXXX, +8801XXXXXXXXX, 8801XXXXXXXXX, 008801XXXXXXXXX; returns the +880 form, or "" when it does not look like a phone number.
+  function ispNorm(raw) {
+    var x = String(raw || "").replace(/[\s\-().]/g, "");
+    if (/^\+\d{7,15}$/.test(x)) return x;
+    if (/^00\d{7,15}$/.test(x)) return "+" + x.slice(2);
+    if (/^880\d{9,10}$/.test(x)) return "+" + x;
+    if (/^01\d{9}$/.test(x)) return "+88" + x;
+    if (/^\d{7,15}$/.test(x)) return x;
+    return "";
+  }
+  function ispRender() {
+    var d = ispLoad(), has = !!d, add = $("#isp-add");
+    $("#isp-btns").hidden = !has;
+    $("#isp-num").textContent = has ? ((d.name ? d.name + " · " : "") + d.num) : t("isp_none");
+    add.setAttribute("data-i18n", has ? "isp_edit" : "isp_add"); add.textContent = t(has ? "isp_edit" : "isp_add");
+  }
   // The logos come from the apps installed on this phone (not drawn by us). If an app is missing, its name is shown instead.
   function loadIcon(btn, pkgs) {
     for (var i = 0; i < pkgs.length; i++) {
@@ -1043,20 +1088,47 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   function loadIcons() { loadIcon($("#isp-wa"), ["com.whatsapp", "com.whatsapp.w4b"]); loadIcon($("#isp-bkash"), [BKASH_PKG]); loadIcon($("#isp-imo"), [IMO_PKG, "com.imo.android.imoimbeta"]); }
   loadIcons();
   function openLink(u) { var ok = false; try { ok = Native.openUrl(u); } catch (e) {} if (!ok) { try { window.open(u, "_blank"); ok = true; } catch (e) {} } return ok; }
-  $("#isp-wa").addEventListener("click", function () { if (!openLink("https://wa.me/" + ISP_DIGITS)) toast(t("isp_nowa")); });
-  $("#isp-call").addEventListener("click", function () { openLink("tel:" + ISP_NUM); });
+  function copyTxt(txt) { var ok = false; try { ok = Native.copyText(txt); } catch (e) {} if (!ok) { try { navigator.clipboard.writeText(txt); ok = true; } catch (e) {} } return ok; }
+  $("#isp-add").addEventListener("click", function () {
+    var d = ispLoad();
+    $("#isp-name").value = d ? d.name || "" : ""; $("#isp-in").value = d ? d.num : ""; $("#isp-err").textContent = "";
+    $("#isp-del").hidden = !d; $("#isp-form").hidden = false; this.hidden = true; $("#isp-in").focus();
+  });
+  function ispClose() { $("#isp-form").hidden = true; $("#isp-add").hidden = false; }
+  $("#isp-cancel").addEventListener("click", ispClose);
+  $("#isp-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var n = ispNorm($("#isp-in").value);
+    if (!n) { $("#isp-err").textContent = t("isp_bad"); return; }
+    try { localStorage.setItem("rm-isp", JSON.stringify({ name: $("#isp-name").value.trim().slice(0, 40), num: n })); } catch (er) {}
+    ispClose(); ispRender(); toast(t("isp_saved"));
+  });
+  $("#isp-del").addEventListener("click", function () { try { localStorage.removeItem("rm-isp"); } catch (e) {} ispClose(); ispRender(); });
+  ispRender();
+  $("#isp-wa").addEventListener("click", function () { var n = ispNum(); if (n && !openLink("https://wa.me/" + n.replace(/\D/g, ""))) toast(t("isp_nowa")); });
+  $("#isp-call").addEventListener("click", function () { var n = ispNum(); if (n) openLink("tel:" + n); });
   $("#isp-imo").addEventListener("click", function () {
-    var copied = false; try { copied = Native.copyText(ISP_NUM); } catch (e) {}
-    if (!copied) { try { navigator.clipboard.writeText(ISP_NUM); } catch (e) {} }
+    var n = ispNum(); if (!n) return; copyTxt(n);
     var opened = false; try { opened = Native.openApp(IMO_PKG) || Native.openApp("com.imo.android.imoimbeta"); } catch (e) {}
     if (opened) toast(t("isp_imo_copied")); else { toast(t("isp_noimo")); openLink("https://play.google.com/store/apps/details?id=" + IMO_PKG); }
   });
   $("#isp-bkash").addEventListener("click", function () {
-    var copied = false; try { copied = Native.copyText(ISP_NUM); } catch (e) {}
-    if (!copied) { try { navigator.clipboard.writeText(ISP_NUM); copied = true; } catch (e) {} }
+    var n = ispNum(); if (!n) return; copyTxt(n);
     var opened = false; try { opened = Native.openApp(BKASH_PKG); } catch (e) {}
     if (opened) toast(t("isp_copied")); else { toast(t("isp_nobkash")); openLink("https://play.google.com/store/apps/details?id=" + BKASH_PKG); }
   });
+
+  // ---- Help: developer contact ----
+  var DEV_MAIL = "soyeib.ahmed.7@gmail.com", DEV_WA = "01340065885", DEV_WA_INTL = "8801340065885";
+  function openHelp() { $("#help-mail").textContent = DEV_MAIL; $("#help-wa").textContent = DEV_WA; $("#help-sheet").hidden = false; }
+  $("#help-first").addEventListener("click", openHelp);
+  $("#help-btn").addEventListener("click", openHelp);
+  $("#help-close").addEventListener("click", function () { $("#help-sheet").hidden = true; });
+  $("#help-sheet").addEventListener("click", function (e) { if (e.target === this) this.hidden = true; });
+  $("#help-mail-open").addEventListener("click", function () { var ok = false; try { ok = Native.openUrl("mailto:" + DEV_MAIL); } catch (e) {} if (!ok) { copyTxt(DEV_MAIL); toast(t("help_copied")); } });
+  $("#help-mail-copy").addEventListener("click", function () { copyTxt(DEV_MAIL); toast(t("help_copied")); });
+  $("#help-wa-open").addEventListener("click", function () { if (!openLink("https://wa.me/" + DEV_WA_INTL)) { copyTxt(DEV_WA); toast(t("help_copied")); } });
+  $("#help-wa-copy").addEventListener("click", function () { copyTxt(DEV_WA); toast(t("help_copied")); });
 
   // ---------- AI assistant ----------
   var AI = { tab: "chat", log: [], busy: false };
@@ -1182,7 +1254,7 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   $("#logout").addEventListener("click", function () { api("/api/logout", {}).catch(function () {}).then(signedOut); });
 
   applyStatic();
-  function showFirstScreen() { $("#ni-wrap").hidden = !niInfo(); cfg = loadCfg(); renderBio(); $("#setup").hidden = !!cfg; $("#login").hidden = !cfg; $("#app").hidden = true; }
+  function showFirstScreen() { $("#help-first").hidden = false; $("#ni-wrap").hidden = !niInfo(); cfg = loadCfg(); renderBio(); $("#setup").hidden = !!cfg; $("#login").hidden = !cfg; $("#app").hidden = true; }
   var DEF_URL = { ac5: "http://192.168.1.1", f3: "http://192.168.0.1", netis: "http://192.168.1.1" };
   $("#s-type").addEventListener("change", function () { var u = $("#s-url"); if (Object.keys(DEF_URL).some(function (k) { return DEF_URL[k] === u.value.trim(); })) u.value = DEF_URL[this.value] || u.value; });
   var lastReport = "";

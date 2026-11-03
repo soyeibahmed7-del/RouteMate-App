@@ -267,8 +267,9 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public boolean openUrl(String url) {
             try {
-                if (url == null || !(url.startsWith("http://") || url.startsWith("https://") || url.startsWith("tel:"))) return false;
-                Intent i = new Intent(url.startsWith("tel:") ? Intent.ACTION_DIAL : Intent.ACTION_VIEW, Uri.parse(url));
+                if (url == null || !(url.startsWith("http://") || url.startsWith("https://") || url.startsWith("tel:") || url.startsWith("mailto:"))) return false;
+                String act = url.startsWith("tel:") ? Intent.ACTION_DIAL : (url.startsWith("mailto:") ? Intent.ACTION_SENDTO : Intent.ACTION_VIEW);
+                Intent i = new Intent(act, Uri.parse(url));
                 i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(i);
                 return true;
