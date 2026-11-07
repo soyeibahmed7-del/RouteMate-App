@@ -235,12 +235,23 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public boolean verifyAppPin(String pin) {
             if (pin == null || !pin.matches("[0-9]{6}") || !hasAppPin()) return false;
+            SharedPreferences prefs = pinPrefs();
+            long now = System.currentTimeMillis();
+            if (now < prefs.getLong("pin_lock_until", 0L)) return false;
             try {
-                byte[] salt = Base64.decode(pinPrefs().getString("pin_salt", ""), Base64.DEFAULT);
-                byte[] expected = Base64.decode(pinPrefs().getString("pin_hash", ""), Base64.DEFAULT);
+                byte[] salt = Base64.decode(prefs.getString("pin_salt", ""), Base64.DEFAULT);
+                byte[] expected = Base64.decode(prefs.getString("pin_hash", ""), Base64.DEFAULT);
                 byte[] actual = derivePin(pin, salt);
                 boolean ok = MessageDigest.isEqual(expected, actual);
                 Arrays.fill(actual, (byte) 0);
+                if (ok) {
+                    prefs.edit().remove("pin_failures").remove("pin_lock_until").apply();
+                } else {
+                    int failures = prefs.getInt("pin_failures", 0) + 1;
+                    SharedPreferences.Editor edit = prefs.edit().putInt("pin_failures", failures);
+                    if (failures >= 5) edit.putLong("pin_lock_until", now + 30000L).putInt("pin_failures", 0);
+                    edit.apply();
+                }
                 return ok;
             } catch (Exception e) { return false; }
         }
