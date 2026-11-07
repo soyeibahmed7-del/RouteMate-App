@@ -395,7 +395,6 @@ body.wbar .help-fab{top:48px}
       <div class="lockup"><img src="img/lockup.png" alt="RouteMate"></div>
       <div><h1 data-i18n="setup_title"></h1><p data-i18n="setup_sub"></p></div>
       <div class="field"><label for="s-type" data-i18n="a_type"></label><select id="s-type" class="rt-select"><option value="auto" data-i18n="s_auto"></option><option value="ac5">Tenda AC5</option><option value="f3">Tenda F3</option><option value="netis">Netis</option></select></div>
-      <div class="field"><label for="s-name" data-i18n="s_name"></label><input id="s-name" type="text" value="Router 1"></div>
       <div class="field"><label for="s-url" data-i18n="s_url"></label><input id="s-url" type="text" value="http://192.168.1.1" inputmode="url" autocapitalize="off"></div>
       <div class="field"><label for="s-rpw" data-i18n="s_rpw"></label><input id="s-rpw" type="password"></div>
       <div class="field"><label for="s-apw" data-i18n="s_apw"></label><input id="s-apw" type="password"></div>
@@ -532,7 +531,6 @@ body.wbar .help-fab{top:48px}
         <div id="router-list"></div>
         <button class="btn primary" type="button" id="add-open" aria-expanded="false" style="margin-top:14px" data-i18n="add_router"></button>
         <form id="add-form" autocomplete="off" hidden>
-          <div class="field"><label for="a-name" data-i18n="s_name"></label><input id="a-name" type="text"></div>
           <div class="field"><label for="a-url" data-i18n="s_url"></label><input id="a-url" type="text" value="http://192.168.0.1" inputmode="url" autocapitalize="off"></div>
           <div class="field"><label for="a-type" data-i18n="a_type"></label><select id="a-type" class="rt-select"><option value="auto" data-i18n="s_auto"></option><option value="f3">Tenda F3</option><option value="ac5">Tenda AC5</option><option value="netis">Netis</option></select></div>
           <div class="field"><label for="a-pw" data-i18n="s_rpw"></label><input id="a-pw" type="password"></div>
@@ -840,7 +838,8 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   }
   function renderStatus() {
     var p = $("#conn"); p.className = "pill " + (failing ? "bad" : "good"); p.textContent = failing ? t("reconnecting") : t("live");
-    $("#who").textContent = user ? user.name + " (" + user.role + ")" : "";
+    var wifiInfo = niInfo();
+    $("#who").textContent = wifiInfo && wifiInfo.wifi && wifiInfo.ssid ? wifiInfo.ssid : (wifiInfo && wifiInfo.wifi ? t("ni_permission") : t("ni_off"));
   }
   function renderNet() {
     var ids = Object.keys(R).filter(function (id) { return (sel === "all" || id === sel) && R[id].net; });
@@ -1062,7 +1061,7 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   $("#add-open").addEventListener("click", function () { var f = $("#add-form"); f.hidden = !f.hidden; this.setAttribute("aria-expanded", f.hidden ? "false" : "true"); if (!f.hidden) f.scrollIntoView({ behavior: "smooth", block: "nearest" }); });
   $("#add-form").addEventListener("submit", function (e) {
     e.preventDefault();
-    var err = $("#add-err"), name = $("#a-name").value.trim() || ("Router " + (allRouters().length + 1)), url = $("#a-url").value.trim().replace(/\/+$/, ""), pw = $("#a-pw").value;
+    var err = $("#add-err"), name = "Router " + (allRouters().length + 1), url = $("#a-url").value.trim().replace(/\/+$/, ""), pw = $("#a-pw").value;
     err.textContent = ""; if (!/^https?:\/\//i.test(url)) url = "http://" + url;
     if (allRouters().some(function (r) { return r.url.toLowerCase() === url.toLowerCase(); })) { err.textContent = t("r_dup"); return; }
     $("#add-btn").disabled = true; err.textContent = t("s_checking");
@@ -1072,7 +1071,7 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
       type = r.type; return new RouterClient({ url: url, password: pw, native: nativeApi, type: type }).snapshot();
     }).then(function () {
       cfg.routers.push({ id: "r" + Date.now().toString(36), name: name, url: url, rpw: pw, type: type, active: true }); saveCfg(); buildClients();
-      $("#a-name").value = ""; $("#a-pw").value = ""; err.textContent = ""; toast(t("r_added")); $("#add-form").hidden = true; $("#add-open").setAttribute("aria-expanded", "false"); acl.loaded = false; poll();
+      $("#a-pw").value = ""; err.textContent = ""; toast(t("r_added")); $("#add-form").hidden = true; $("#add-open").setAttribute("aria-expanded", "false"); acl.loaded = false; poll();
     }).catch(function (er) { err.textContent = er.message; }).then(function () { $("#add-btn").disabled = false; });
   });
   // ---- pull down at the top of any page to refresh ----
@@ -1397,7 +1396,7 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   $("#rep-btn").addEventListener("click", function () { try { Native.copyText(lastReport); this.textContent = t("rep_done"); } catch (e) {} });
   $("#setup-form").addEventListener("submit", function (e) {
     e.preventDefault();
-    var err = $("#setup-err"), rname = $("#s-name").value.trim() || "Router 1", url = $("#s-url").value.trim().replace(/\/+$/, ""), rpw = $("#s-rpw").value, a1 = $("#s-apw").value, a2 = $("#s-apw2").value;
+    var err = $("#setup-err"), rname = "Router 1", url = $("#s-url").value.trim().replace(/\/+$/, ""), rpw = $("#s-rpw").value, a1 = $("#s-apw").value, a2 = $("#s-apw2").value;
     err.textContent = "";
     if (!/^https?:\/\//i.test(url)) url = "http://" + url;
     if (a1.length < 6) { err.textContent = t("s_short"); return; }
@@ -1454,6 +1453,7 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   }
   function renderNetCard() {
     var c = $("#netcard"), i = niInfo();
+    renderStatus();
     if (!i) { $("#ni-wrap").hidden = true; return; }
     if (!i.wifi) { c.innerHTML = '<div class="nh"><span class="dot off"></span>' + t("ni_off") + '<button id="ni-r">' + t("ni_ref") + '</button></div><div style="opacity:.7">' + t("ni_off_h") + '</div>'; $("#ni-r").onclick = renderNetCard; return; }
     var band = i.freq >= 4900 ? "5G" : (i.freq ? "2.4G" : ""), link = i.linkMbps > 0 ? i.linkMbps + " Mbps" + (band ? " (" + band + ")" : "") : "";
