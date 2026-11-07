@@ -199,6 +199,8 @@ public class MainActivity extends FragmentActivity {
                             .setSubtitle("Use your enrolled face or fingerprint")
                             .setNegativeButtonText(cancel)
                             .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_WEAK)
+                            // Let passive face recognition complete without an extra confirmation tap when supported.
+                            .setConfirmationRequired(false)
                             .build();
                         prompt.authenticate(info);
                     } catch (Throwable t) {
