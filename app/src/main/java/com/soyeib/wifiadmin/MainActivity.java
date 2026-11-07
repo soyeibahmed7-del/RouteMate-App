@@ -1,6 +1,6 @@
 package com.soyeib.wifiadmin;
 
-import android.app.Activity;
+import androidx.fragment.app.FragmentActivity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -56,7 +56,7 @@ import androidx.core.content.ContextCompat;
  * The whole app is a web page (assets/index.html). A web page is not allowed to call the router directly,
  * so this class gives the page three small helpers: plain HTTP to the router, MD5/SHA-256, and the router's AES.
  */
-public class MainActivity extends Activity {
+public class MainActivity extends FragmentActivity {
     // Fixed key and IV used by the Tenda admin page itself (js/aes/util.js).
     private static final byte[] AES_KEY = "AbDu2ZdTFut6eQ7f".getBytes(StandardCharsets.UTF_8);
     private static final byte[] AES_IV = "EU5H62G9ICGRNI43".getBytes(StandardCharsets.UTF_8);
