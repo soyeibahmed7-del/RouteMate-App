@@ -694,7 +694,7 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   function routers() { return allRouters().filter(function (r) { return r.active !== false; }); }
   function multi() { return routers().length > 1; }
   // Use each router Wi-Fi SSID instead of its generated internal profile label.
-  function routerLabel(r) { var w = (R[r.id] && R[r.id].wifi) || {}, a = String(w.ssid24 || "").trim(), b = String(w.ssid5 || "").trim(); if (a && b && a !== b) return a + " / " + b; return a || b || r.name || "Router"; }
+  function routerLabel(r) { var p = allRouters().filter(function (x) { return x.id === r.id; })[0] || {}, w = (R[r.id] && R[r.id].wifi) || {}, a = String(w.ssid24 || p.ssid24 || "").trim(), b = String(w.ssid5 || p.ssid5 || "").trim(); if (a && b && a !== b) return a + " / " + b; return a || b || r.name || "Router"; }
   function aclRouters() { return routers(); }
   function aclDefault() { var a = aclRouters(), c = curId(); return a.some(function (r) { return r.id === c; }) ? c : (a[0] && a[0].id) || ""; }
   function curId() { return sel !== "all" && R[sel] ? sel : (routers()[0] && routers()[0].id); }
@@ -901,6 +901,8 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
         Object.keys(r.prevMap).forEach(function (m) { if (r.prevMap[m].online && !(map[m] && map[m].online)) log("e_out", { n: r.prevMap[m].name + tag }); });
       } else log("e_start", { r: r.name });
       r.prevMap = map; r.devices = s.devices; r.guests = s.guests || []; r.me = s.me; r.wifi = s.wifi;
+      var profile = allRouters().filter(function (x) { return x.id === r.id; })[0], w = s.wifi || {};
+      if (profile) { var a = String(w.ssid24 || "").trim(), b = String(w.ssid5 || "").trim(); if (profile.ssid24 !== a || profile.ssid5 !== b) { profile.ssid24 = a; profile.ssid5 = b; saveCfg(); } }
       return r.rc.internet().then(function (n) {
         r.net = n;
         if (r.prevNet && r.prevNet !== n.state) { var msg = (multi() ? r.name + " – " : "") + t("net_" + n.state); log("e_net", { s: msg }); toast(msg); }
