@@ -155,6 +155,11 @@ select, input[type="text"], input[type="password"] { border: 1px solid var(--lin
 .login-card h1 { font-size: 20px; }
 .login-card p { margin: 0; color: var(--muted); font-size: 14px; }
 .login-err { color: var(--bad); font-size: 14px; min-height: 22px; }
+.welcome-screen { min-height: calc(100vh - 32px); display: grid; place-items: center; padding: 20px; }
+.welcome-card { width: 100%; max-width: 390px; display: flex; flex-direction: column; align-items: center; gap: 22px; padding: 34px 24px; text-align: center; background: rgba(10,28,64,.55); border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 4px 28px rgba(0,40,140,.28); backdrop-filter: blur(8px); }
+.welcome-card .lockup img { width: min(78vw, 290px); height: auto; }
+.welcome-card p { margin: 0; color: var(--muted); font-size: 14px; }
+.welcome-signup { width: 100%; max-width: 280px; min-height: 48px; font-weight: 700; font-size: 16px; }
 .login-top { display: flex; justify-content: flex-end; max-width: 380px; margin: 0 auto; }
 @media (max-width: 760px) {
   .app { grid-template-columns: minmax(0, 1fr); }
@@ -751,6 +756,13 @@ input,select { max-width:100%; }
   <div class="hrow"><small data-i18n="help_wa"></small><b id="help-wa"></b><div class="hb"><button class="btn" type="button" id="help-wa-open" data-i18n="help_wa_open"></button><button class="btn" type="button" id="help-wa-copy" data-i18n="help_copy"></button></div></div>
   <button class="btn primary" type="button" id="help-close" style="width:100%" data-i18n="help_close"></button>
 </div></div>
+<section id="welcome" class="welcome-screen">
+  <div class="welcome-card">
+    <div class="lockup"><img src="img/lockup.png" alt="RouteMate"></div>
+    <p>Smart Wi-Fi Management</p>
+    <button class="btn primary welcome-signup" type="button" id="welcome-signup">Sign Up</button>
+  </div>
+</section>
 <section id="setup" hidden>
   <div class="login-top"><button class="btn sm" type="button" data-lang-toggle></button></div>
   <div class="login">
@@ -1295,7 +1307,7 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
     requestSsidPermission();
     poll(); clearInterval(timer); timer = setInterval(poll, 6000);
   }
-  function signedOut() { clearInterval(timer); user = null; unlocked = false; R = {}; $("#app").hidden = true; $("#setup").hidden = !!loadCfg(); $("#login").hidden = !loadCfg(); }
+  function signedOut() { clearInterval(timer); user = null; unlocked = false; R = {}; showFirstScreen(); }
 
   // ---- access list (blacklist / whitelist), one router at a time ----
   function aclDevices() {
@@ -1695,7 +1707,8 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   }
   installPasswordVisibility();
   applyStatic();
-  function showFirstScreen() { $("#help-first").hidden = false; $("#ni-wrap").hidden = !niInfo(); cfg = loadCfg(); renderBio(); $("#setup").hidden = !!cfg; $("#login").hidden = !cfg; $("#app").hidden = true; if (!cfg) requestSsidPermission(); }
+  function showFirstScreen() { cfg = loadCfg(); renderBio(); $("#welcome").hidden = false; $("#setup").hidden = true; $("#login").hidden = true; $("#app").hidden = true; $("#help-first").hidden = true; $("#ni-wrap").hidden = true; }
+  $("#welcome-signup").addEventListener("click", function () { cfg = loadCfg(); $("#welcome").hidden = true; $("#setup").hidden = !!cfg; $("#login").hidden = !cfg; if (!cfg) requestSsidPermission(); else renderBio(); });
   var DEF_URL = { ac5: "http://192.168.1.1", f3: "http://192.168.0.1", netis: "http://192.168.1.1" };
   $("#s-type").addEventListener("change", function () { var u = $("#s-url"); if (Object.keys(DEF_URL).some(function (k) { return DEF_URL[k] === u.value.trim(); })) u.value = DEF_URL[this.value] || u.value; });
   var lastReport = "";
