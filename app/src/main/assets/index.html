@@ -1710,7 +1710,7 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   }
   installPasswordVisibility();
   applyStatic();
-  function showFirstScreen() { cfg = loadCfg(); renderBio(); $("#welcome").hidden = false; $("#setup").hidden = true; $("#login").hidden = true; $("#app").hidden = true; $("#help-first").hidden = true; $("#ni-wrap").hidden = true; }
+  function showFirstScreen() { cfg = loadCfg(); renderBio(); var hasSetup = !!cfg; $("#welcome").hidden = hasSetup; $("#setup").hidden = true; $("#login").hidden = !hasSetup; $("#app").hidden = true; $("#help-first").hidden = true; $("#ni-wrap").hidden = true; if (hasSetup) renderBio(); }
   $("#welcome-signup").addEventListener("click", function () { cfg = loadCfg(); $("#welcome").hidden = true; $("#setup").hidden = !!cfg; $("#login").hidden = !cfg; if (!cfg) requestSsidPermission(); else renderBio(); });
   var DEF_URL = { ac5: "http://192.168.1.1", f3: "http://192.168.0.1", netis: "http://192.168.1.1" };
   $("#s-type").addEventListener("change", function () { var u = $("#s-url"); if (Object.keys(DEF_URL).some(function (k) { return DEF_URL[k] === u.value.trim(); })) u.value = DEF_URL[this.value] || u.value; });
