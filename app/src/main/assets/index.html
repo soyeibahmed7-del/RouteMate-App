@@ -1044,11 +1044,13 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
       if (!target) return;
       target.active = target.active === false;
       saveCfg(); sel = "all";
-      if (acl.rid && !routers().some(function (r) { return r.id === acl.rid; })) { acl.rid = ""; acl.loaded = false; }
+      if (!routers().some(function (r) { return r.id === acl.rid; })) { acl.rid = aclDefault(); acl.loaded = false; }
       state.devices = []; state.guests = []; series.d = []; series.u = [];
       buildClients(); renderAll();
       toast(t(target.active ? "r_active" : "r_inactive") + ": " + target.name);
-      poll(); return;
+      poll();
+      if (route === "wifi" && acl.rid) reloadAcl();
+      return;
     }
     var d = e.target.closest("[data-rdel]"); if (!d) return;
     if (allRouters().length <= 1) { toast(t("r_last")); return; }
