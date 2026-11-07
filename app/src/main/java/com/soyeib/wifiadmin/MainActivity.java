@@ -6,6 +6,8 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.Intent;
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
@@ -61,6 +63,7 @@ public class MainActivity extends FragmentActivity {
     private static final byte[] AES_KEY = "AbDu2ZdTFut6eQ7f".getBytes(StandardCharsets.UTF_8);
     private static final byte[] AES_IV = "EU5H62G9ICGRNI43".getBytes(StandardCharsets.UTF_8);
 
+    private static final int REQ_WIFI_NAME_PERMISSION = 7401;
     private WebView web;
     private final ExecutorService pool = Executors.newFixedThreadPool(4);
 
@@ -79,6 +82,14 @@ public class MainActivity extends FragmentActivity {
         web.setWebViewClient(new WebViewClient());
         web.addJavascriptInterface(new Bridge(), "Native");
         web.loadUrl("file:///android_asset/index.html");
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_WIFI_NAME_PERMISSION) {
+            callJs("window.refreshWifiName && window.refreshWifiName()");
+        }
     }
 
     @Override
@@ -113,7 +124,7 @@ public class MainActivity extends FragmentActivity {
     }
 
     public class Bridge {
-        /** Wi-Fi details of the phone as JSON (no location permission needed; the Wi-Fi name is only included if Android allows it). */
+        /** Wi-Fi details of the phone. Android requires foreground location permission to reveal the connected SSID. */
         @JavascriptInterface
         public String networkInfo() {
             try {
@@ -123,6 +134,7 @@ public class MainActivity extends FragmentActivity {
                 NetworkCapabilities nc = n == null ? null : cm.getNetworkCapabilities(n);
                 boolean wifi = nc != null && nc.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
                 o.put("wifi", wifi);
+                o.put("ssidPermission", hasWifiNamePermission());
                 try {
                     WifiManager wm0 = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
                     o.put("wifiOn", wm0 != null && wm0.isWifiEnabled());
@@ -154,7 +166,7 @@ public class MainActivity extends FragmentActivity {
                         }
                     }
                     WifiManager wm = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-                    WifiInfo wi = wm == null ? null : wm.getConnectionInfo();
+                    WifiInfo wi = (wm == null || !hasWifiNamePermission()) ? null : wm.getConnectionInfo();
                     if (wi != null) {
                         o.put("linkMbps", wi.getLinkSpeed());
                         o.put("freq", wi.getFrequency());
@@ -166,6 +178,27 @@ public class MainActivity extends FragmentActivity {
             } catch (Throwable t) {
                 return "{}";
             }
+        }
+
+        /** Checks the Android permission needed to read the currently connected Wi-Fi SSID. */
+        @JavascriptInterface
+        public boolean hasWifiNamePermission() {
+            return ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED;
+        }
+
+        /** Requests permission only after the user taps the Wi-Fi refresh control. */
+        @JavascriptInterface
+        public void requestWifiNamePermission() {
+            runOnUiThread(new Runnable() {
+                @Override public void run() {
+                    if (!hasWifiNamePermission()) {
+                        requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQ_WIFI_NAME_PERMISSION);
+                    } else {
+                        callJs("window.refreshWifiName && window.refreshWifiName()");
+                    }
+                }
+            });
         }
 
         /** Whether a strong biometric is enrolled and available for fingerprint-focused unlock. */
