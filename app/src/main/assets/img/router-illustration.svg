@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+<title id="title">RouteMate router</title><desc id="desc">A clean blue wireless router illustration with two antennas and Wi-Fi signal rings.</desc>
+<defs>
+ <linearGradient id="body" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#173e69"/><stop offset=".52" stop-color="#0c2748"/><stop offset="1" stop-color="#07182e"/></linearGradient>
+ <linearGradient id="top" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#2c72ae"/><stop offset="1" stop-color="#12416f"/></linearGradient>
+ <linearGradient id="edge" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#39d9ff"/><stop offset=".5" stop-color="#258eff"/><stop offset="1" stop-color="#39d9ff"/></linearGradient>
+ <filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<ellipse cx="320" cy="304" rx="225" ry="22" fill="#020b18" opacity=".55"/>
+<g stroke-linejoin="round">
+ <path d="M155 160 135 38q-2-14 12-18l15-4q13-3 17 11l31 130" fill="#0d2d50" stroke="#55cfff" stroke-width="5"/>
+ <path d="m466 157 31-130q4-14 17-11l15 4q14 4 12 18l-20 124" fill="#0d2d50" stroke="#55cfff" stroke-width="5"/>
+ <path d="M170 171 320 112l150 59-150 65z" fill="url(#top)" stroke="#5ccfff" stroke-width="4"/>
+ <path d="m170 171 150 65v77l-150-64z" fill="#0b2340" stroke="#2e8ac2" stroke-width="3"/>
+ <path d="m320 236 150-65v78l-150 64z" fill="url(#body)" stroke="#2e8ac2" stroke-width="3"/>
+ <path d="m174 183 146 63 146-63" fill="none" stroke="url(#edge)" stroke-width="7" filter="url(#glow)"/>
+ <path d="M293 153q27-23 54 0M303 164q17-14 34 0M314 174q6-5 12 0" fill="none" stroke="#a6f4ff" stroke-width="6" stroke-linecap="round"/>
+ <circle cx="320" cy="184" r="5" fill="#5df2ff" filter="url(#glow)"/>
+ <g fill="#6de8ff"><circle cx="385" cy="269" r="4"/><circle cx="405" cy="260" r="4"/><circle cx="425" cy="251" r="4"/></g>
+ <path d="m197 255 90 39M344 296l102-44" stroke="#2b78a8" stroke-width="3" opacity=".65"/>
+</g></svg>
