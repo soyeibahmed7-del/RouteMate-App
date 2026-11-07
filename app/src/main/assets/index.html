@@ -693,6 +693,8 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   // Routers without an explicit flag are treated as active for backward compatibility.
   function routers() { return allRouters().filter(function (r) { return r.active !== false; }); }
   function multi() { return routers().length > 1; }
+  // Use each router Wi-Fi SSID instead of its generated internal profile label.
+  function routerLabel(r) { var w = (R[r.id] && R[r.id].wifi) || {}, a = String(w.ssid24 || "").trim(), b = String(w.ssid5 || "").trim(); if (a && b && a !== b) return a + " / " + b; return a || b || r.name || "Router"; }
   function aclRouters() { return routers(); }
   function aclDefault() { var a = aclRouters(), c = curId(); return a.some(function (r) { return r.id === c; }) ? c : (a[0] && a[0].id) || ""; }
   function curId() { return sel !== "all" && R[sel] ? sel : (routers()[0] && routers()[0].id); }
@@ -812,7 +814,7 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
       var guests = filter === "blocked" ? [] : (o.guests || []).filter(hit);
       total += list.length + guests.length;
       if (!list.length && !guests.length && !o.error) return;
-      var head = multi() ? '<h3 class="grp"><span>' + esc(r.name) + "</span><small>" + (o.error ? esc(o.error) : t("grp_count", { n: list.length + guests.length })) + "</small></h3>" : "";
+      var head = multi() ? '<h3 class="grp"><span>' + esc(routerLabel(r)) + "</span><small>" + (o.error ? esc(o.error) : t("grp_count", { n: list.length + guests.length })) + "</small></h3>" : "";
       html += '<section class="grp-box">' + head + list.map(card).join("") + guests.map(gcard).join("") + "</section>";
     });
     $("#devices").innerHTML = total || html ? html : '<div class="panel">' + t("no_match") + "</div>";
@@ -871,7 +873,7 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   }
   function renderBar() {
     var bar = $("#rbar"); bar.hidden = !multi(); if (!multi()) return;
-    var items = [["all", t("r_all")]].concat(routers().map(function (r) { return [r.id, r.name]; }));
+    var items = [["all", t("r_all")]].concat(routers().map(function (r) { return [r.id, routerLabel(r)]; }));
     bar.innerHTML = items.map(function (x) { return '<button class="chip" type="button" data-r="' + esc(x[0]) + '" aria-pressed="' + (sel === x[0] ? "true" : "false") + '">' + esc(x[1]) + "</button>"; }).join("");
   }
   function renderRouters() {
@@ -879,7 +881,7 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
       var active = r.active !== false, o = R[r.id] || {};
       var connection = !active ? "" : (o.error ? '<span class="pill bad rt-state">' + esc(o.error) + "</span>" : '<span class="pill good rt-state">' + t("r_ok") + "</span>");
       var status = '<span class="pill ' + (active ? "good" : "warn") + ' rt-state">' + t(active ? "r_active" : "r_inactive") + "</span>";
-      return '<div class="rt-row"><div class="grow"><b>' + esc(r.name) + "</b><small>" + esc(r.url) + "</small>" + status + connection + '</div><button class="btn sm rt-toggle" type="button" data-rtoggle="' + esc(r.id) + '" aria-pressed="' + (active ? "true" : "false") + '">' + t(active ? "r_deactivate" : "r_activate") + '</button><button class="btn sm" type="button" data-ropen="' + esc(r.id) + '">' + t("r_open") + '</button>' +
+      return '<div class="rt-row"><div class="grow"><b>' + esc(routerLabel(r)) + "</b><small>" + esc(r.url) + "</small>" + status + connection + '</div><button class="btn sm rt-toggle" type="button" data-rtoggle="' + esc(r.id) + '" aria-pressed="' + (active ? "true" : "false") + '">' + t(active ? "r_deactivate" : "r_activate") + '</button><button class="btn sm" type="button" data-ropen="' + esc(r.id) + '">' + t("r_open") + '</button>' +
         (allRouters().length > 1 ? '<button class="btn sm danger" type="button" data-rdel="' + esc(r.id) + '">' + t("r_remove") + "</button>" : "") + "</div>";
     }).join("");
   }
@@ -1052,7 +1054,7 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
       if (!routers().some(function (r) { return r.id === acl.rid; })) { acl.rid = aclDefault(); acl.loaded = false; }
       state.devices = []; state.guests = []; series.d = []; series.u = [];
       buildClients(); renderAll();
-      toast(t(target.active ? "r_active" : "r_inactive") + ": " + target.name);
+      toast(t(target.active ? "r_active" : "r_inactive") + ": " + routerLabel(target));
       poll();
       if (route === "wifi" && acl.rid) reloadAcl();
       return;
@@ -1188,18 +1190,18 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   function hostOf(u) { return String(u || "").replace(/^https?:\/\//, "").replace(/\/.*$/, ""); }
   var aiEnv = {
     devices: function () { return state.devices; },
-    routers: function () { return routers().map(function (r) { return { id: r.id, name: r.name, type: r.type || "ac5", host: hostOf(r.url) }; }); },
+    routers: function () { return routers().map(function (r) { return { id: r.id, name: routerLabel(r), type: r.type || "ac5", host: hostOf(r.url) }; }); },
     api: api, poll: function () { return poll(); }, isMe: function (d) { return isMe(d); }, known: isKnown, setKnown: function (mac, on) { var a = knownSet(), i = a.indexOf(mac); if (on && i < 0) a.push(mac); if (!on && i > -1) a.splice(i, 1); try { localStorage.setItem("rm-known", JSON.stringify(a)); } catch (e) {} },
     health: function () { return aiHealth(); }
   };
   var aiTools = AiTools.Tools(aiEnv);
   function aiHealth() {
     var devs = state.devices.map(function (d) { var o = Object.create(d); o.isMe = isMe(d); return o; });
-    return AiTools.analyze({ devices: devs, known: isKnown, routers: routers().map(function (c) { var r = R[c.id] || {}; return { id: c.id, name: c.name, net: r.net, wifi: r.wifi }; }) });
+    return AiTools.analyze({ devices: devs, known: isKnown, routers: routers().map(function (c) { var r = R[c.id] || {}; return { id: c.id, name: routerLabel(c), net: r.net, wifi: r.wifi }; }) });
   }
   function aiState() {
     return {
-      routers: routers().map(function (c) { var r = R[c.id] || {}, n = r.net || {}; return { name: c.name, model: { ac5: "Tenda AC5", f3: "Tenda F3", netis: "Netis" }[c.type] || "Tenda AC5", internet: n.state || "unknown", wan_type: n.type || "", link_mbps: n.linkMbps || null, wifi_security: r.wifi && r.wifi.security || "", firmware: "not exposed by this app", online_devices: (r.devices || []).filter(function (d) { return d.online; }).length, guest_devices: (r.guests || []).length }; }),
+      routers: routers().map(function (c) { var r = R[c.id] || {}, n = r.net || {}; return { name: routerLabel(c), model: { ac5: "Tenda AC5", f3: "Tenda F3", netis: "Netis" }[c.type] || "Tenda AC5", internet: n.state || "unknown", wan_type: n.type || "", link_mbps: n.linkMbps || null, wifi_security: r.wifi && r.wifi.security || "", firmware: "not exposed by this app", online_devices: (r.devices || []).filter(function (d) { return d.online; }).length, guest_devices: (r.guests || []).length }; }),
       devices: state.devices.map(function (d) { var f = aiTools.full(d); delete f.mac_tail; f.mac_tail = d.mac.slice(-5); return f; })
     };
   }
