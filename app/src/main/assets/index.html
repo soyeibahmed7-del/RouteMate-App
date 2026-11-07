@@ -135,6 +135,13 @@ svg.chart text { fill: var(--muted); font-family: var(--font-mono); font-size: 1
 .dev .acts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 .dev .acts label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
 select, input[type="text"], input[type="password"] { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 10px; min-height: 34px; max-width: 100%; }
+/* Password visibility toggle */
+.password-wrap { position: relative; width: 100%; }
+.password-wrap > input { width: 100%; padding-right: 48px !important; }
+.password-visibility { position: absolute; top: 50%; right: 8px; transform: translateY(-50%); width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; padding: 0; }
+.password-visibility:hover { background: var(--surface-2); color: var(--fg); }
+.password-visibility svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label { font-size: 13px; font-weight: 600; }
 .field input { width: 100%; min-height: 42px; }
@@ -1313,6 +1320,30 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
   }); });
   $("#logout").addEventListener("click", function () { api("/api/logout", {}).catch(function () {}).then(signedOut); });
 
+  // Add an eye control to every password/PIN field without changing stored values.
+  function installPasswordVisibility() {
+    document.querySelectorAll('input[type="password"]:not([data-eye-ready])').forEach(function (input) {
+      input.dataset.eyeReady = "1";
+      var wrap = document.createElement("div"); wrap.className = "password-wrap";
+      input.parentNode.insertBefore(wrap, input); wrap.appendChild(input);
+      var btn = document.createElement("button"); btn.type = "button"; btn.className = "password-visibility";
+      btn.setAttribute("aria-label", "Show password"); btn.setAttribute("aria-pressed", "false");
+      function draw() {
+        btn.innerHTML = input.type === "password"
+          ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>'
+          : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 5.2A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.1 3.8M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7c1.6 0 3-.4 4.2-1"></path><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg>';
+        btn.setAttribute("aria-label", input.type === "password" ? "Show password" : "Hide password");
+        btn.setAttribute("aria-pressed", input.type === "text" ? "true" : "false");
+      }
+      btn.addEventListener("click", function () {
+        var reveal = input.type === "password";
+        input.type = reveal ? "text" : "password";
+        draw();
+      });
+      wrap.appendChild(btn); draw();
+    });
+  }
+  installPasswordVisibility();
   applyStatic();
   function showFirstScreen() { $("#help-first").hidden = false; $("#ni-wrap").hidden = !niInfo(); cfg = loadCfg(); renderBio(); $("#setup").hidden = !!cfg; $("#login").hidden = !cfg; $("#app").hidden = true; if (!cfg) requestSsidPermission(); }
   var DEF_URL = { ac5: "http://192.168.1.1", f3: "http://192.168.0.1", netis: "http://192.168.1.1" };
