@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -19,8 +20,6 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.CancellationSignal;
-import android.content.DialogInterface;
 import android.util.Base64;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
@@ -36,6 +35,10 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.SecureRandom;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -44,6 +47,10 @@ import java.util.concurrent.Executors;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+
+import androidx.biometric.BiometricManager;
+import androidx.biometric.BiometricPrompt;
+import androidx.core.content.ContextCompat;
 
 /**
  * The whole app is a web page (assets/index.html). A web page is not allowed to call the router directly,
@@ -161,54 +168,93 @@ public class MainActivity extends Activity {
             }
         }
 
-        /** True when this phone (Android 10+) has a fingerprint or face enrolled that apps may use. */
+        /** Whether a Class 2 (or stronger) face/fingerprint biometric is enrolled and available. */
         @JavascriptInterface
         public boolean biometricAvailable() {
-            if (Build.VERSION.SDK_INT < 29) return false;
             try {
-                android.hardware.biometrics.BiometricManager bm = getSystemService(android.hardware.biometrics.BiometricManager.class);
-                return bm != null && bm.canAuthenticate() == android.hardware.biometrics.BiometricManager.BIOMETRIC_SUCCESS;
-            } catch (Throwable t) {
-                return false;
-            }
+                BiometricManager bm = BiometricManager.from(MainActivity.this);
+                return bm.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK) == BiometricManager.BIOMETRIC_SUCCESS;
+            } catch (Throwable t) { return false; }
         }
 
-        /** Shows the system fingerprint dialog. The result goes to window.BioDone(id, ok, code) in the page. id is digits only. */
+        /** Launches the system biometric prompt; app PIN is a separate fallback handled by the app. */
         @JavascriptInterface
         public void biometricAuth(final String id, final String title, final String cancel) {
-            if (Build.VERSION.SDK_INT < 29 || id == null || !id.matches("[0-9]{1,12}")) {
-                callJs("window.BioDone && window.BioDone('" + (id == null ? "0" : id.replaceAll("[^0-9]", "")) + "',false,'na')");
-                return;
-            }
+            if (id == null || !id.matches("[0-9]{1,12}")) return;
             runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
+                @Override public void run() {
                     try {
-                        final android.hardware.biometrics.BiometricPrompt prompt = new android.hardware.biometrics.BiometricPrompt.Builder(MainActivity.this)
-                                .setTitle(title)
-                                .setNegativeButton(cancel, getMainExecutor(), new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        callJs("window.BioDone && window.BioDone('" + id + "',false,'cancel')");
-                                    }
-                                })
-                                .build();
-                        prompt.authenticate(new CancellationSignal(), getMainExecutor(), new android.hardware.biometrics.BiometricPrompt.AuthenticationCallback() {
-                            @Override
-                            public void onAuthenticationSucceeded(android.hardware.biometrics.BiometricPrompt.AuthenticationResult result) {
-                                callJs("window.BioDone && window.BioDone('" + id + "',true,'')");
-                            }
-
-                            @Override
-                            public void onAuthenticationError(int errorCode, CharSequence errString) {
-                                callJs("window.BioDone && window.BioDone('" + id + "',false,'e" + errorCode + "')");
-                            }
-                        });
+                        BiometricPrompt prompt = new BiometricPrompt(MainActivity.this,
+                            ContextCompat.getMainExecutor(MainActivity.this),
+                            new BiometricPrompt.AuthenticationCallback() {
+                                @Override public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
+                                    callJs("window.BioDone && window.BioDone('" + id + "',true,'')");
+                                }
+                                @Override public void onAuthenticationError(int code, CharSequence message) {
+                                    callJs("window.BioDone && window.BioDone('" + id + "',false,'e" + code + "')");
+                                }
+                            });
+                        BiometricPrompt.PromptInfo info = new BiometricPrompt.PromptInfo.Builder()
+                            .setTitle(title)
+                            .setSubtitle("Use your enrolled face or fingerprint")
+                            .setNegativeButtonText(cancel)
+                            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_WEAK)
+                            .build();
+                        prompt.authenticate(info);
                     } catch (Throwable t) {
                         callJs("window.BioDone && window.BioDone('" + id + "',false,'na')");
                     }
                 }
             });
+        }
+
+        private SharedPreferences pinPrefs() {
+            return getSharedPreferences("routemate_app_security", Context.MODE_PRIVATE);
+        }
+
+        @JavascriptInterface
+        public boolean hasAppPin() {
+            return pinPrefs().contains("pin_hash") && pinPrefs().contains("pin_salt");
+        }
+
+        /** Store a separate six-digit app PIN as PBKDF2-HMAC-SHA256 hash; never expose it to JavaScript storage. */
+        @JavascriptInterface
+        public boolean setAppPin(String pin) {
+            if (pin == null || !pin.matches("[0-9]{6}")) return false;
+            try {
+                byte[] salt = new byte[16];
+                new SecureRandom().nextBytes(salt);
+                byte[] hash = derivePin(pin, salt);
+                return pinPrefs().edit()
+                    .putString("pin_salt", Base64.encodeToString(salt, Base64.NO_WRAP))
+                    .putString("pin_hash", Base64.encodeToString(hash, Base64.NO_WRAP))
+                    .commit();
+            } catch (Exception e) { return false; }
+        }
+
+        @JavascriptInterface
+        public boolean verifyAppPin(String pin) {
+            if (pin == null || !pin.matches("[0-9]{6}") || !hasAppPin()) return false;
+            try {
+                byte[] salt = Base64.decode(pinPrefs().getString("pin_salt", ""), Base64.DEFAULT);
+                byte[] expected = Base64.decode(pinPrefs().getString("pin_hash", ""), Base64.DEFAULT);
+                byte[] actual = derivePin(pin, salt);
+                boolean ok = MessageDigest.isEqual(expected, actual);
+                Arrays.fill(actual, (byte) 0);
+                return ok;
+            } catch (Exception e) { return false; }
+        }
+
+        @JavascriptInterface
+        public boolean clearAppPin() {
+            return pinPrefs().edit().remove("pin_salt").remove("pin_hash").commit();
+        }
+
+        private byte[] derivePin(String pin, byte[] salt) throws Exception {
+            PBEKeySpec spec = new PBEKeySpec(pin.toCharArray(), salt, 150000, 256);
+            try {
+                return SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).getEncoded();
+            } finally { spec.clearPassword(); }
         }
 
         /** headers: "Name: value" lines. bodyB64: request body as base64 (empty for none). Result goes to NativeDone/NativeFail in the page. */
