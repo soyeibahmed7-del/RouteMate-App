@@ -31,11 +31,11 @@ jobs:
         env: { KEYSTORE_PASSWORD: '${{ secrets.KEYSTORE_PASSWORD }}', KEY_ALIAS: '${{ secrets.KEY_ALIAS }}' }
       - uses: actions/upload-artifact@v4
         with:
-          name: wifi-admin-apk
+          name: RouterMate-apk
           path: app/build/outputs/apk/debug/app-debug.apk
       - name: Publish release
         env: { GH_TOKEN: '${{ github.token }}' }
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk WiFi-Admin.apk
+          cp app/build/outputs/apk/debug/app-debug.apk RouterMate.apk
           gh release delete latest -y --cleanup-tag || true
-          gh release create latest WiFi-Admin.apk --title "WiFi Admin (latest)" --notes "Download WiFi-Admin.apk on your Android phone and install it."
+          gh release create latest RouterMate.apk --title "RouterMate (latest)" --notes "Download RouterMate.apk on your Android phone and install it."
