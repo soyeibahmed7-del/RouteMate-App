@@ -675,6 +675,69 @@ input,select { max-width:100%; }
   .nav a svg { width:18px !important; height:18px !important; }
 }
 
+
+/* Final layout repair: preserve a desktop rail and keep mobile tabs clear of content. */
+@media (min-width:761px) {
+ body { padding:22px 24px 28px !important; }
+ .app { display:grid !important; grid-template-columns:224px minmax(0,1fr) !important; gap:24px !important; max-width:1240px !important; }
+ .rail { position:sticky !important; inset:auto !important; align-self:start !important; display:flex !important; flex-direction:column !important; margin:0 !important; padding:16px 12px !important; border:1px solid var(--line) !important; border-radius:18px !important; background:rgba(8,22,38,.88) !important; }
+ .rail .brand { display:flex !important; }
+ .nav { position:static !important; display:flex !important; flex-direction:column !important; width:auto !important; padding:8px 0 0 !important; border:0 !important; background:transparent !important; box-shadow:none !important; backdrop-filter:none !important; }
+ .nav a { min-height:46px !important; flex:none !important; flex-direction:row !important; justify-content:flex-start !important; font-size:13px !important; padding:10px 12px !important; }
+ .nav a[aria-current="page"] { box-shadow:inset 3px 0 var(--accent) !important; }
+ .holo { display:none !important; }
+}
+.hero-img { display:block; width:100%; height:142px; object-fit:contain; object-position:center; -webkit-mask-image:none !important; mask-image:none !important; filter:drop-shadow(0 10px 18px rgba(0,0,0,.28)); }
+.hero { grid-template-columns:minmax(120px,34%) minmax(0,1fr) !important; gap:14px !important; }
+.hero-t { min-width:0; overflow-wrap:anywhere; }
+.hero .net-head { flex-wrap:wrap; }
+.hero .net-head b { overflow-wrap:anywhere; }
+.login { width:100%; padding:clamp(18px,4vh,42px) 0 0 !important; }
+.login-card { width:min(100%,420px) !important; margin-inline:auto; gap:14px !important; }
+.login-card .field,.login-card .password-wrap { width:100%; min-width:0; }
+.login-card .field input,.login-card .field select { width:100%; min-width:0; }
+.login-card > button { width:100%; min-height:46px; }
+.login-card .lockup img { display:block; max-width:100%; height:auto; margin-inline:auto; }
+.password-wrap { min-width:0; }
+.password-visibility { z-index:2; }
+.field { min-width:0; }
+.field label { line-height:1.4; }
+#setup-form .login-err,#login-form .login-err { overflow-wrap:anywhere; }
+#view-devices .toolbar,#view-devices .chips { min-width:0; }
+#view-devices .chips { flex-wrap:wrap; }
+.dev,.dev>div,.dev .acts { min-width:0; }
+.dev .meta { overflow-wrap:anywhere; word-break:break-word; }
+.dev .acts select { min-width:0; max-width:100%; }
+#view-overview .tiles { grid-template-columns:repeat(3,minmax(0,1fr)); }
+@media (max-width:760px) {
+ body { padding:12px 12px calc(106px + env(safe-area-inset-bottom,0px)) !important; }
+ .app { display:block !important; max-width:620px !important; }
+ .rail { position:static !important; inset:auto !important; display:block !important; margin:0 0 12px !important; padding:10px 12px 0 !important; }
+ .rail .brand { display:flex !important; }
+ .nav { position:fixed !important; left:8px !important; right:8px !important; top:auto !important; bottom:calc(8px + env(safe-area-inset-bottom,0px)) !important; z-index:100 !important; display:flex !important; flex-direction:row !important; align-items:stretch !important; justify-content:space-around !important; gap:2px !important; padding:6px 5px !important; border:1px solid rgba(116,193,225,.25) !important; border-radius:17px !important; background:rgba(7,20,34,.97) !important; box-shadow:0 10px 28px rgba(0,0,0,.42) !important; backdrop-filter:blur(18px) !important; }
+ .nav a { flex:1 1 0 !important; min-width:0 !important; min-height:54px !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important; gap:3px !important; padding:4px 1px !important; font-size:clamp(8px,2.5vw,10px) !important; line-height:1.15 !important; text-align:center !important; }
+ .nav a svg { width:19px !important; height:19px !important; flex:none !important; }
+ .nav a span { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+ .top { padding-right:58px !important; }
+ .hero { grid-template-columns:minmax(96px,34%) minmax(0,1fr) !important; gap:10px !important; }
+ .hero-img { height:112px; }
+ .dev { grid-template-columns:38px minmax(0,1fr) !important; }
+ .dev .use { grid-column:2 !important; }
+ .dev .acts { grid-column:1/-1 !important; flex-wrap:wrap; padding-top:8px; border-top:1px solid var(--line); }
+ .dev .acts label { min-width:0; }
+ .dev .acts select { width:100%; }
+ .login { padding-top:16px !important; }
+ .login-card { padding:20px 17px !important; }
+ #view-overview .tiles { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:360px) {
+ body { padding-left:9px !important; padding-right:9px !important; }
+ .panel { padding:13px !important; }
+ .hero { grid-template-columns:1fr !important; }
+ .hero-img { width:min(68%,220px); height:100px; margin:0 auto; }
+ #view-overview .tiles { grid-template-columns:1fr 1fr; }
+}
+
 </style>
 </head>
 <body>
@@ -726,12 +789,6 @@ input,select { max-width:100%; }
 
 <div class="app" id="app" hidden>
 <div class="holo" aria-hidden="true"><div class="holo-float"><div class="holo-scene">
-  <i class="hglow"></i>
-  <i class="hring r1"></i><i class="hring r2"></i><i class="hring r3"></i>
-  <div class="hcore"><svg viewBox="0 0 24 24" fill="none" stroke="#5fe8ff" stroke-width="2.4" stroke-linecap="round"><path d="M2 8.8a15 15 0 0 1 20 0"/><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16.1a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1.2" fill="#e8fbff" stroke="none"/></svg></div>
-  <span class="hp p1"><b></b></span><span class="hp p2"><b></b></span><span class="hp p3"><b></b></span><span class="hp p4"><b></b></span>
-</div></div></div>
-  <div class="holo" aria-hidden="true"><div class="holo-float"><div class="holo-scene">
     <div class="hglow"></div>
     <div class="hring r1"></div><div class="hring r2"></div><div class="hring r3"></div>
     <div class="horb o1"><i></i></div><div class="horb o2"><i></i></div><div class="horb o3"><i></i></div><div class="horb o4"><i></i></div>
@@ -1148,7 +1205,7 @@ sa_title: "নিরাপত্তা পরামর্শ", sa_ok: "রাউ
     $("#nets").innerHTML = !routers().length ? '<div class="panel hint">' + esc(t("r_none_active")) + '</div>' : ids.map(function (id) {
       var r = R[id], net = r.net, c = routers().filter(function (x) { return x.id === id; })[0] || {};
       var host = (c.url || "").replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-      return '<div class="panel net hero ' + (net.state === "ok" ? "ok" : "bad") + '"><img class="hero-img" src="img/router.png" alt=""><div class="hero-t"><small>' + esc(t("router_status")) + (multi() ? " · " + esc(r.name) : "") + '</small><div class="net-head"><span class="net-dot"></span><b>' + esc(t("net_" + net.state)) + '</b></div><p class="hint">' + esc(t("nm_" + net.state)) + '</p><small class="mono">' + ({ ac5: "Tenda AC5", f3: "Tenda F3", netis: "Netis" }[c.type] || "Tenda AC5") + " · " + esc(host) + "</small></div></div>";
+      return '<div class="panel net hero ' + (net.state === "ok" ? "ok" : "bad") + '"><img class="hero-img" src="img/router-illustration.svg" alt="Router illustration"><div class="hero-t"><small>' + esc(t("router_status")) + (multi() ? " · " + esc(r.name) : "") + '</small><div class="net-head"><span class="net-dot"></span><b>' + esc(t("net_" + net.state)) + '</b></div><p class="hint">' + esc(t("nm_" + net.state)) + '</p><small class="mono">' + ({ ac5: "Tenda AC5", f3: "Tenda F3", netis: "Netis" }[c.type] || "Tenda AC5") + " · " + esc(host) + "</small></div></div>";
     }).join("");
   }
   function renderLists() {
