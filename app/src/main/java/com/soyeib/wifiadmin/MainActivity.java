@@ -187,7 +187,7 @@ public class MainActivity extends FragmentActivity {
                     == PackageManager.PERMISSION_GRANTED;
         }
 
-        /** Requests permission only after the user taps the Wi-Fi refresh control. */
+        /** Requests Android permission to read the connected Wi-Fi SSID. */
         @JavascriptInterface
         public void requestWifiNamePermission() {
             runOnUiThread(new Runnable() {
