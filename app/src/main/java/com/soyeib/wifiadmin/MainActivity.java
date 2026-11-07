@@ -168,12 +168,12 @@ public class MainActivity extends FragmentActivity {
             }
         }
 
-        /** Whether a Class 2 (or stronger) face/fingerprint biometric is enrolled and available. */
+        /** Whether a strong biometric is enrolled and available for fingerprint-focused unlock. */
         @JavascriptInterface
         public boolean biometricAvailable() {
             try {
                 BiometricManager bm = BiometricManager.from(MainActivity.this);
-                return bm.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK) == BiometricManager.BIOMETRIC_SUCCESS;
+                return bm.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS;
             } catch (Throwable t) { return false; }
         }
 
@@ -196,9 +196,9 @@ public class MainActivity extends FragmentActivity {
                             });
                         BiometricPrompt.PromptInfo info = new BiometricPrompt.PromptInfo.Builder()
                             .setTitle(title)
-                            .setSubtitle("Use your enrolled face or fingerprint")
+                            .setSubtitle("Use your enrolled fingerprint")
                             .setNegativeButtonText(cancel)
-                            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_WEAK)
+                            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
                             // Let passive face recognition complete without an extra confirmation tap when supported.
                             .setConfirmationRequired(false)
                             .build();
